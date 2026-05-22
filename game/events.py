@@ -23,7 +23,8 @@ PRIORITY_PASS = "priority_pass"
 JUDGE_APPEAL = "judge_appeal"
 JUDGE_RULING = "judge_ruling"
 COMMENTARY = "commentary"
-REASONING = "reasoning"
+REASONING = "reasoning"  # natural language narration (shown in spectator view)
+THINKING = "thinking"  # internal chain-of-thought from think= block (logged, collapsed in UI)
 GAME_OVER = "game_over"
 MANA_TAPPED = "mana_tapped"
 INFO = "info"

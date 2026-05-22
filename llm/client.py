@@ -1,14 +1,14 @@
-"""OpenAI-compatible client pointed at Ollama."""
+"""Ollama native client."""
 
 from __future__ import annotations
 
 import os
 
-from openai import OpenAI
+import ollama
 
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://192.168.1.26:11434/v1")
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://192.168.1.26:11434")
 DEFAULT_MODEL = os.environ.get("OLLAMA_MODEL", "gemma4:latest")
 
 
-def make_client() -> OpenAI:
-    return OpenAI(base_url=OLLAMA_BASE_URL, api_key="ollama")
+def make_client() -> ollama.Client:
+    return ollama.Client(host=OLLAMA_HOST)

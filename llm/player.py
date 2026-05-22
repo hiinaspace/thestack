@@ -4,18 +4,22 @@ from __future__ import annotations
 
 import json
 
-from openai import OpenAI
+import ollama
 
 from game.actions import PLAYER_TOOLS, ActionError, dispatch_tool
-from game.events import REASONING, EventLog
+from game.events import REASONING, THINKING, EventLog
 from game.state import GameState
 from llm.prompts import build_player_system_prompt, format_game_state_for_player
 
 MAX_TOOL_ITERATIONS = 20  # guard against infinite loops
 
+# Convert our OpenAI-schema tool defs to the dict format Ollama accepts
+# (Ollama's Python SDK accepts the same schema directly)
+_OLLAMA_TOOLS = PLAYER_TOOLS
+
 
 class PlayerAgent:
-    def __init__(self, name: str, model: str, client: OpenAI, event_log: EventLog) -> None:
+    def __init__(self, name: str, model: str, client: ollama.Client, event_log: EventLog) -> None:
         self.name = name
         self.model = model
         self.client = client
@@ -45,80 +49,67 @@ class PlayerAgent:
                 break
 
             try:
-                response = self.client.chat.completions.create(
+                response = self.client.chat(
                     model=self.model,
                     messages=messages,
-                    tools=PLAYER_TOOLS,
-                    tool_choice="auto",
-                    temperature=0.8,
+                    tools=_OLLAMA_TOOLS,
+                    think=True,
+                    options={"temperature": 0.8},
                 )
             except Exception as e:
                 self.event_log.append(REASONING, {"player": self.name, "text": f"[LLM error: {e}]"})
                 break
 
-            msg = response.choices[0].message
+            msg = response.message
 
-            # Log reasoning/natural language output
+            # Log the internal thinking trace if present
+            if msg.thinking:
+                self.event_log.append(THINKING, {"player": self.name, "text": msg.thinking})
+                if verbose:
+                    # Show a brief excerpt so the terminal isn't flooded
+                    excerpt = msg.thinking[:200].replace("\n", " ")
+                    print(
+                        f"\n  [{self.name} thinking] {excerpt}{'...' if len(msg.thinking) > 200 else ''}"
+                    )
+
+            # Log natural language narration
             if msg.content:
                 if verbose:
                     print(f"\n[{self.name}] {msg.content}")
                 self.event_log.append(REASONING, {"player": self.name, "text": msg.content})
 
             if not msg.tool_calls:
-                # No tool call — model may have finished or given a text response
-                # Try to parse fallback JSON
+                # No tool call — try fallback JSON parse, otherwise treat as pass_priority
                 tool_call = _parse_fallback_json(msg.content or "")
                 if tool_call:
                     tool_name, args = tool_call
                     result = self._run_tool(tool_name, args, state, verbose)
+                    # Append assistant turn + tool result as plain user message
                     messages.append({"role": "assistant", "content": msg.content})
                     messages.append({"role": "user", "content": f"Tool result: {result}"})
                     if tool_name in ("pass_priority", "concede"):
                         break
                 else:
-                    # Model gave a plain text response — treat as pass_priority
                     if verbose:
                         print(f"[{self.name}] No tool call, treating as pass_priority")
                     dispatch_tool("pass_priority", {}, state, self.name, self.event_log)
                     break
                 continue
 
-            # Process tool calls
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": msg.content,
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
-                        }
-                        for tc in msg.tool_calls
-                    ],
-                }
-            )
+            # Append assistant message with tool calls to history
+            # Ollama Message objects can be passed directly back into messages
+            messages.append(msg)
 
             done = False
             for tc in msg.tool_calls:
                 tool_name = tc.function.name
-                try:
-                    args = json.loads(tc.function.arguments)
-                except json.JSONDecodeError:
-                    args = {}
+                # Ollama SDK gives arguments as a dict already (not a JSON string)
+                args = tc.function.arguments if isinstance(tc.function.arguments, dict) else {}
 
                 result = self._run_tool(tool_name, args, state, verbose)
 
-                messages.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": tc.id,
-                        "content": result,
-                    }
-                )
+                # Ollama tool result format: role=tool, content=result string
+                messages.append({"role": "tool", "content": result, "name": tool_name})
 
                 if tool_name in ("pass_priority", "concede"):
                     done = True
@@ -139,7 +130,6 @@ class PlayerAgent:
             print(f"  [{self.name}] -> {tool_name}({arg_str})")
 
         if tool_name == "appeal":
-            # Import here to avoid circular
             from llm.judge import JudgeAgent
 
             situation = args.get("situation", "")
@@ -164,9 +154,9 @@ class PlayerAgent:
         game_state_str = format_game_state_for_player(state, self.name)
 
         attacker_creatures = [
-            f"{state.players[attacker_player].battlefield[i].name}"
-            for i in range(len(state.players[attacker_player].battlefield))
-            if state.players[attacker_player].battlefield[i].instance_id in state.declared_attackers
+            c.name
+            for c in state.players[attacker_player].battlefield
+            if c.instance_id in state.declared_attackers
         ]
 
         context = (

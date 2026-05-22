@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from openai import OpenAI
+import json
+
+import ollama
 
 from game.events import COMMENTARY, EventLog
 from game.state import GameState
@@ -11,7 +13,9 @@ from llm.prompts import build_commentator_system_prompt
 
 
 class CommentatorAgent:
-    def __init__(self, client: OpenAI, event_log: EventLog, model: str = DEFAULT_MODEL) -> None:
+    def __init__(
+        self, client: ollama.Client, event_log: EventLog, model: str = DEFAULT_MODEL
+    ) -> None:
         self.client = client
         self.event_log = event_log
         self.model = model
@@ -25,8 +29,6 @@ class CommentatorAgent:
         if not turn_events:
             return ""
 
-        import json
-
         event_summary = self.event_log.format_for_display(turn_events)
         board_summary = json.dumps(state.to_public_dict(), indent=2)
 
@@ -38,15 +40,17 @@ class CommentatorAgent:
         )
 
         try:
-            response = self.client.chat.completions.create(
+            # Commentator doesn't need thinking — its output IS the content
+            response = self.client.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self._system_prompt},
                     {"role": "user", "content": prompt},
                 ],
-                temperature=0.9,
+                think=False,
+                options={"temperature": 0.9},
             )
-            text = response.choices[0].message.content or ""
+            text = response.message.content or ""
         except Exception as e:
             text = f"[Commentator unavailable: {e}]"
 

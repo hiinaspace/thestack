@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from openai import OpenAI
+import json
+
+import ollama
 
 from game.events import JUDGE_APPEAL, JUDGE_RULING, EventLog
 from game.state import GameState
@@ -11,7 +13,9 @@ from llm.prompts import build_judge_system_prompt
 
 
 class JudgeAgent:
-    def __init__(self, client: OpenAI, event_log: EventLog, model: str = DEFAULT_MODEL) -> None:
+    def __init__(
+        self, client: ollama.Client, event_log: EventLog, model: str = DEFAULT_MODEL
+    ) -> None:
         self.client = client
         self.event_log = event_log
         self.model = model
@@ -22,20 +26,19 @@ class JudgeAgent:
         self.event_log.append(JUDGE_APPEAL, {"situation": situation})
 
         public = state.to_public_dict()
-        import json
-
         context = f"APPEAL: {situation}\n\nCurrent game state:\n{json.dumps(public, indent=2)}"
 
         try:
-            response = self.client.chat.completions.create(
+            response = self.client.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": self._system_prompt},
                     {"role": "user", "content": context},
                 ],
-                temperature=0.3,
+                think=True,
+                options={"temperature": 0.3},
             )
-            ruling = response.choices[0].message.content or "No ruling issued."
+            ruling = response.message.content or "No ruling issued."
         except Exception as e:
             ruling = f"[Judge unavailable: {e}]"
 
