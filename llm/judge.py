@@ -7,7 +7,6 @@ import json
 import ollama
 
 from game.events import JUDGE_APPEAL, JUDGE_RULING, EventLog
-from game.state import GameState
 from llm.client import DEFAULT_MODEL
 from llm.prompts import build_judge_system_prompt
 
@@ -21,12 +20,11 @@ class JudgeAgent:
         self.model = model
         self._system_prompt = build_judge_system_prompt()
 
-    def rule(self, situation: str, state: GameState) -> str:
+    def rule(self, situation: str, obs: dict) -> str:
         """Issue a ruling on the situation. Returns ruling text."""
         self.event_log.append(JUDGE_APPEAL, {"situation": situation})
 
-        public = state.to_public_dict()
-        context = f"APPEAL: {situation}\n\nCurrent game state:\n{json.dumps(public, indent=2)}"
+        context = f"APPEAL: {situation}\n\nCurrent game state:\n{json.dumps(obs, indent=2)}"
 
         try:
             response = self.client.chat(
