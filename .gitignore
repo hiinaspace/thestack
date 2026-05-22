@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+games/
+*.jsonl
+.ruff_cache/
+.ty_cache/

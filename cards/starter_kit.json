@@ -1,0 +1,610 @@
+{
+  "cards": {
+    "Forest": {
+      "name": "Forest",
+      "scryfall_id": "basic-forest",
+      "mana_cost": "",
+      "cmc": 0,
+      "type_line": "Basic Land \u2014 Forest",
+      "oracle_text": "({T}: Add {G}.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": []
+    },
+    "Plains": {
+      "name": "Plains",
+      "scryfall_id": "basic-plains",
+      "mana_cost": "",
+      "cmc": 0,
+      "type_line": "Basic Land \u2014 Plains",
+      "oracle_text": "({T}: Add {W}.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": []
+    },
+    "Mountain": {
+      "name": "Mountain",
+      "scryfall_id": "basic-mountain",
+      "mana_cost": "",
+      "cmc": 0,
+      "type_line": "Basic Land \u2014 Mountain",
+      "oracle_text": "({T}: Add {R}.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": []
+    },
+    "Swamp": {
+      "name": "Swamp",
+      "scryfall_id": "basic-swamp",
+      "mana_cost": "",
+      "cmc": 0,
+      "type_line": "Basic Land \u2014 Swamp",
+      "oracle_text": "({T}: Add {B}.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": []
+    },
+    "Island": {
+      "name": "Island",
+      "scryfall_id": "basic-island",
+      "mana_cost": "",
+      "cmc": 0,
+      "type_line": "Basic Land \u2014 Island",
+      "oracle_text": "({T}: Add {U}.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": []
+    },
+    "Arboretum Elemental": {
+      "name": "Arboretum Elemental",
+      "scryfall_id": "6f4400bf-134b-4011-985d-eed4e5ba1de8",
+      "mana_cost": "{7}{G}{G}",
+      "cmc": 9.0,
+      "type_line": "Creature \u2014 Elemental",
+      "oracle_text": "Convoke (Your creatures can help cast this spell. Each creature you tap while casting this spell pays for {1} or one mana of that creature's color.)\nHexproof (This creature can't be the target of spells or abilities your opponents control.)",
+      "power": "7",
+      "toughness": "5",
+      "keywords": [
+        "Hexproof",
+        "Convoke"
+      ],
+      "colors": [
+        "G"
+      ]
+    },
+    "Bayou Groff": {
+      "name": "Bayou Groff",
+      "scryfall_id": "4a82b032-b1ba-456c-abab-c0f7430b0587",
+      "mana_cost": "{1}{G}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Plant Dog",
+      "oracle_text": "As an additional cost to cast this spell, sacrifice a creature or pay {3}.",
+      "power": "5",
+      "toughness": "4",
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Bristlebud Farmer": {
+      "name": "Bristlebud Farmer",
+      "scryfall_id": "d498c4de-5e80-4baa-9fcb-70f164880c84",
+      "mana_cost": "{2}{G}{G}",
+      "cmc": 4.0,
+      "type_line": "Creature \u2014 Plant Druid",
+      "oracle_text": "Trample\nWhen this creature enters, create two Food tokens. (They're artifacts with \"{2}, {T}, Sacrifice this token: You gain 3 life.\")\nWhenever this creature attacks, you may sacrifice a Food. If you do, mill three cards. You may put a permanent card from among them into your hand.",
+      "power": "5",
+      "toughness": "5",
+      "keywords": [
+        "Food",
+        "Trample",
+        "Mill"
+      ],
+      "colors": [
+        "G"
+      ]
+    },
+    "Cemetery Recruitment": {
+      "name": "Cemetery Recruitment",
+      "scryfall_id": "34a80873-86d7-44a9-894b-65e8f77dd2ea",
+      "mana_cost": "{1}{B}",
+      "cmc": 2.0,
+      "type_line": "Sorcery",
+      "oracle_text": "Return target creature card from your graveyard to your hand. If it's a Zombie card, draw a card.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Centaur Courser": {
+      "name": "Centaur Courser",
+      "scryfall_id": "e8b67ee8-3189-4426-8b1a-b540267768fd",
+      "mana_cost": "{2}{G}",
+      "cmc": 3.0,
+      "type_line": "Creature \u2014 Centaur Warrior",
+      "oracle_text": "",
+      "power": "3",
+      "toughness": "3",
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Child of Night": {
+      "name": "Child of Night",
+      "scryfall_id": "3887af00-a87d-4396-b82b-38b88c084e8e",
+      "mana_cost": "{1}{B}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Vampire",
+      "oracle_text": "Lifelink",
+      "power": "2",
+      "toughness": "1",
+      "keywords": [
+        "Lifelink"
+      ],
+      "colors": [
+        "B"
+      ]
+    },
+    "Commune with Nature": {
+      "name": "Commune with Nature",
+      "scryfall_id": "5224eec3-2941-4d16-a713-099e34e93eee",
+      "mana_cost": "{G}",
+      "cmc": 1.0,
+      "type_line": "Sorcery",
+      "oracle_text": "Look at the top five cards of your library. You may reveal a creature card from among them and put it into your hand. Put the rest on the bottom of your library in any order.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Dark Ritual": {
+      "name": "Dark Ritual",
+      "scryfall_id": "95f27eeb-6f14-4db3-adb9-9be5ed76b34b",
+      "mana_cost": "{B}",
+      "cmc": 1.0,
+      "type_line": "Instant",
+      "oracle_text": "Add {B}{B}{B}.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Eager First-Year": {
+      "name": "Eager First-Year",
+      "scryfall_id": "7a83543b-3b6f-4e28-96f9-007b814bcfd6",
+      "mana_cost": "{1}{W}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Human Wizard",
+      "oracle_text": "Magecraft \u2014 Whenever you cast or copy an instant or sorcery spell, this creature gets +1/+0 until end of turn.",
+      "power": "2",
+      "toughness": "2",
+      "keywords": [
+        "Magecraft"
+      ],
+      "colors": [
+        "W"
+      ]
+    },
+    "Falkenrath Reaver": {
+      "name": "Falkenrath Reaver",
+      "scryfall_id": "d7b5913e-a103-4e4a-9281-8b88c1fb746e",
+      "mana_cost": "{1}{R}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Vampire",
+      "oracle_text": "",
+      "power": "2",
+      "toughness": "2",
+      "keywords": [],
+      "colors": [
+        "R"
+      ]
+    },
+    "Ghoulish Procession": {
+      "name": "Ghoulish Procession",
+      "scryfall_id": "c178227f-3b66-45f7-9838-dff70f1f2003",
+      "mana_cost": "{1}{B}",
+      "cmc": 2.0,
+      "type_line": "Enchantment",
+      "oracle_text": "Whenever one or more nontoken creatures die, create a 2/2 black Zombie creature token with decayed. This ability triggers only once each turn. (A creature with decayed can't block. When it attacks, sacrifice it at end of combat.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Giant Growth": {
+      "name": "Giant Growth",
+      "scryfall_id": "bd0bf74e-14c1-4428-88d8-2181a080b5d0",
+      "mana_cost": "{G}",
+      "cmc": 1.0,
+      "type_line": "Instant",
+      "oracle_text": "Target creature gets +3/+3 until end of turn.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Goblin Piker": {
+      "name": "Goblin Piker",
+      "scryfall_id": "083ec3e7-950c-4e9d-aba5-02ed13d723f0",
+      "mana_cost": "{1}{R}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Goblin Warrior",
+      "oracle_text": "",
+      "power": "2",
+      "toughness": "1",
+      "keywords": [],
+      "colors": [
+        "R"
+      ]
+    },
+    "Gravedigger": {
+      "name": "Gravedigger",
+      "scryfall_id": "0fb714a0-e61b-4ccf-8de6-3a6bf87c8315",
+      "mana_cost": "{3}{B}",
+      "cmc": 4.0,
+      "type_line": "Creature \u2014 Zombie",
+      "oracle_text": "When this creature enters, you may return target creature card from your graveyard to your hand.",
+      "power": "2",
+      "toughness": "2",
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Grizzly Bears": {
+      "name": "Grizzly Bears",
+      "scryfall_id": "409f9b88-f03e-40b6-9883-68c14c37c0de",
+      "mana_cost": "{1}{G}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Bear",
+      "oracle_text": "",
+      "power": "2",
+      "toughness": "2",
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Headless Rider": {
+      "name": "Headless Rider",
+      "scryfall_id": "c24018e8-b8f1-44a5-9355-8b79f363569d",
+      "mana_cost": "{2}{B}",
+      "cmc": 3.0,
+      "type_line": "Creature \u2014 Zombie",
+      "oracle_text": "Whenever this creature or another nontoken Zombie you control dies, create a 2/2 black Zombie creature token.",
+      "power": "3",
+      "toughness": "1",
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Jewel Thief": {
+      "name": "Jewel Thief",
+      "scryfall_id": "736e498e-1245-40c1-96a4-c9bcfd1cfe1f",
+      "mana_cost": "{2}{G}",
+      "cmc": 3.0,
+      "type_line": "Creature \u2014 Cat Rogue",
+      "oracle_text": "Vigilance, trample\nWhen this creature enters, create a Treasure token. (It's an artifact with \"{T}, Sacrifice this token: Add one mana of any color.\")",
+      "power": "3",
+      "toughness": "3",
+      "keywords": [
+        "Vigilance",
+        "Treasure",
+        "Trample"
+      ],
+      "colors": [
+        "G"
+      ]
+    },
+    "Lightning Bolt": {
+      "name": "Lightning Bolt",
+      "scryfall_id": "77c6fa74-5543-42ac-9ead-0e890b188e99",
+      "mana_cost": "{R}",
+      "cmc": 1.0,
+      "type_line": "Instant",
+      "oracle_text": "Lightning Bolt deals 3 damage to any target.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "R"
+      ]
+    },
+    "Llanowar Elves": {
+      "name": "Llanowar Elves",
+      "scryfall_id": "6a0b230b-d391-4998-a3f7-7b158a0ec2cd",
+      "mana_cost": "{G}",
+      "cmc": 1.0,
+      "type_line": "Creature \u2014 Elf Druid",
+      "oracle_text": "{T}: Add {G}.",
+      "power": "1",
+      "toughness": "1",
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Might of the Masses": {
+      "name": "Might of the Masses",
+      "scryfall_id": "9900f47d-e1ec-411d-92f3-aed8e01ee535",
+      "mana_cost": "{G}",
+      "cmc": 1.0,
+      "type_line": "Instant",
+      "oracle_text": "Target creature gets +1/+1 until end of turn for each creature you control.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Murder": {
+      "name": "Murder",
+      "scryfall_id": "2c249609-9cf7-46f1-b94c-9329add966bb",
+      "mana_cost": "{1}{B}{B}",
+      "cmc": 3.0,
+      "type_line": "Instant",
+      "oracle_text": "Destroy target creature.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Rabid Bite": {
+      "name": "Rabid Bite",
+      "scryfall_id": "53a73200-b798-4bfd-a431-8b94e17b70be",
+      "mana_cost": "{1}{G}",
+      "cmc": 2.0,
+      "type_line": "Sorcery",
+      "oracle_text": "Target creature you control deals damage equal to its power to target creature you don't control.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "G"
+      ]
+    },
+    "Raise the Alarm": {
+      "name": "Raise the Alarm",
+      "scryfall_id": "6c7c8527-55f6-494d-b4f7-c427a5735053",
+      "mana_cost": "{1}{W}",
+      "cmc": 2.0,
+      "type_line": "Instant",
+      "oracle_text": "Create two 1/1 white Soldier creature tokens.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "W"
+      ]
+    },
+    "Sanctuary Cat": {
+      "name": "Sanctuary Cat",
+      "scryfall_id": "af79c8fb-9189-48c2-a7b8-a1097dbaf138",
+      "mana_cost": "{W}",
+      "cmc": 1.0,
+      "type_line": "Creature \u2014 Cat",
+      "oracle_text": "",
+      "power": "1",
+      "toughness": "2",
+      "keywords": [],
+      "colors": [
+        "W"
+      ]
+    },
+    "Scorching Dragonfire": {
+      "name": "Scorching Dragonfire",
+      "scryfall_id": "44ea09c1-d420-4e99-a968-ade614579287",
+      "mana_cost": "{1}{R}",
+      "cmc": 2.0,
+      "type_line": "Instant",
+      "oracle_text": "Scorching Dragonfire deals 3 damage to target creature or planeswalker. If that creature or planeswalker would die this turn, exile it instead.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "R"
+      ]
+    },
+    "Serra Angel": {
+      "name": "Serra Angel",
+      "scryfall_id": "b8c5e74c-96e7-4a1f-93b7-14d776fe4b2d",
+      "mana_cost": "{3}{W}{W}",
+      "cmc": 5.0,
+      "type_line": "Creature \u2014 Angel",
+      "oracle_text": "Flying\nVigilance (Attacking doesn't cause this creature to tap.)",
+      "power": "4",
+      "toughness": "4",
+      "keywords": [
+        "Flying",
+        "Vigilance"
+      ],
+      "colors": [
+        "W"
+      ]
+    },
+    "Shock": {
+      "name": "Shock",
+      "scryfall_id": "760b41a1-c087-4b11-b8a0-fb01d8a4c0c6",
+      "mana_cost": "{R}",
+      "cmc": 1.0,
+      "type_line": "Instant",
+      "oracle_text": "Shock deals 2 damage to any target.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "R"
+      ]
+    },
+    "Sign in Blood": {
+      "name": "Sign in Blood",
+      "scryfall_id": "b89d9372-8682-4a61-a003-8bccfbb6cbb4",
+      "mana_cost": "{B}{B}",
+      "cmc": 2.0,
+      "type_line": "Sorcery",
+      "oracle_text": "Target player draws two cards and loses 2 life.",
+      "power": null,
+      "toughness": null,
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Stitched Assistant": {
+      "name": "Stitched Assistant",
+      "scryfall_id": "c1debb8c-d5e0-49e5-ab27-2d50e6f9d8d2",
+      "mana_cost": "{2}{U}",
+      "cmc": 3.0,
+      "type_line": "Creature \u2014 Zombie",
+      "oracle_text": "Exploit (When this creature enters, you may sacrifice a creature.)\nWhen this creature exploits a creature, scry 1, then draw a card. (To scry 1, look at the top card of your library, then you may put that card on the bottom.)",
+      "power": "3",
+      "toughness": "2",
+      "keywords": [
+        "Exploit",
+        "Scry"
+      ],
+      "colors": [
+        "U"
+      ]
+    },
+    "Walking Corpse": {
+      "name": "Walking Corpse",
+      "scryfall_id": "053b59b4-a22c-4228-aadc-ae9da6bb465e",
+      "mana_cost": "{1}{B}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Zombie",
+      "oracle_text": "",
+      "power": "2",
+      "toughness": "2",
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Swiftfoot Boots": {
+      "name": "Swiftfoot Boots",
+      "scryfall_id": "1969b151-3192-4d35-80ca-c4e180601ec8",
+      "mana_cost": "{2}",
+      "cmc": 2.0,
+      "type_line": "Artifact \u2014 Equipment",
+      "oracle_text": "Equipped creature has hexproof and haste. (It can't be the target of spells or abilities your opponents control. It can attack and {T} no matter when it came under your control.)\nEquip {1} ({1}: Attach to target creature you control. Equip only as a sorcery.)",
+      "power": null,
+      "toughness": null,
+      "keywords": [
+        "Equip"
+      ],
+      "colors": []
+    },
+    "Tattered Mummy": {
+      "name": "Tattered Mummy",
+      "scryfall_id": "4c006ad5-db2b-42c6-8018-660e08f18f50",
+      "mana_cost": "{1}{B}",
+      "cmc": 2.0,
+      "type_line": "Creature \u2014 Zombie Jackal",
+      "oracle_text": "When this creature dies, each opponent loses 2 life.",
+      "power": "1",
+      "toughness": "2",
+      "keywords": [],
+      "colors": [
+        "B"
+      ]
+    },
+    "Glorybringer": {
+      "name": "Glorybringer",
+      "scryfall_id": "06f90d62-6d21-47b1-a427-eb25a42f4dcb",
+      "mana_cost": "{3}{R}{R}",
+      "cmc": 5.0,
+      "type_line": "Creature \u2014 Dragon",
+      "oracle_text": "Flying, haste\nYou may exert this creature as it attacks. When you do, it deals 4 damage to target non-Dragon creature an opponent controls. (An exerted creature won't untap during your next untap step.)",
+      "power": "4",
+      "toughness": "4",
+      "keywords": [
+        "Flying",
+        "Haste",
+        "Exert"
+      ],
+      "colors": [
+        "R"
+      ]
+    },
+    "Giant Spider": {
+      "name": "Giant Spider",
+      "scryfall_id": "213c9202-b6f4-43ab-b57f-b97a1da5e263",
+      "mana_cost": "{3}{G}",
+      "cmc": 4.0,
+      "type_line": "Creature \u2014 Spider",
+      "oracle_text": "Reach (This creature can block creatures with flying.)",
+      "power": "2",
+      "toughness": "4",
+      "keywords": [
+        "Reach"
+      ],
+      "colors": [
+        "G"
+      ]
+    }
+  },
+  "decks": {
+    "forces_of_the_wild": {
+      "Forest": 14,
+      "Plains": 10,
+      "Eager First-Year": 2,
+      "Jewel Thief": 3,
+      "Sanctuary Cat": 2,
+      "Arboretum Elemental": 1,
+      "Might of the Masses": 2,
+      "Bristlebud Farmer": 2,
+      "Bayou Groff": 2,
+      "Llanowar Elves": 3,
+      "Grizzly Bears": 3,
+      "Centaur Courser": 4,
+      "Serra Angel": 1,
+      "Giant Growth": 4,
+      "Rabid Bite": 2,
+      "Commune with Nature": 2,
+      "Raise the Alarm": 1,
+      "Giant Spider": 2
+    },
+    "chaos_of_the_undead": {
+      "Mountain": 12,
+      "Swamp": 12,
+      "Goblin Piker": 3,
+      "Child of Night": 3,
+      "Walking Corpse": 2,
+      "Falkenrath Reaver": 2,
+      "Stitched Assistant": 2,
+      "Tattered Mummy": 2,
+      "Gravedigger": 2,
+      "Headless Rider": 2,
+      "Ghoulish Procession": 2,
+      "Shock": 3,
+      "Lightning Bolt": 2,
+      "Scorching Dragonfire": 2,
+      "Murder": 2,
+      "Dark Ritual": 2,
+      "Sign in Blood": 2,
+      "Cemetery Recruitment": 2,
+      "Glorybringer": 1
+    }
+  }
+}
