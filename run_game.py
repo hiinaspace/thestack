@@ -9,12 +9,43 @@ from pathlib import Path
 
 from cards.loader import make_player
 from game.actions import resolve_combat_damage
-from game.events import DRAW, GAME_OVER, TURN_START, EventLog
+from game.events import DRAW, GAME_OVER, INSTANT_WINDOW, TURN_START, EventLog
+from game.rules import has_instant_options
 from game.state import GameState
 from llm.client import DEFAULT_MODEL, make_client
 from llm.commentator import CommentatorAgent
 from llm.player import PlayerAgent
 from llm.prompts import format_game_state_for_player
+
+
+def _clear_mana_pools(state: GameState) -> None:
+    for p in state.players.values():
+        p.mana_pool = {}
+
+
+def _offer_instant_window(
+    responder_name: str,
+    responder_agent: PlayerAgent,
+    state: GameState,
+    event_log: EventLog,
+    context_prefix: str,
+    verbose: bool,
+) -> None:
+    """Offer responder a priority window to cast instants. No-ops if nothing castable."""
+    responder = state.players[responder_name]
+    if not has_instant_options(responder, state, responder_name):
+        return
+    event_log.append(INSTANT_WINDOW, {"player": responder_name})
+    game_state_str = format_game_state_for_player(state, responder_name)
+    context = (
+        f"INSTANT WINDOW\n\n{game_state_str}\n\n"
+        f"{context_prefix}\n"
+        f"Your hand: {[c.name for c in responder.hand]}\n\n"
+        "You may cast instants now, or pass_priority."
+    )
+    if verbose:
+        print(f"\n  [INSTANT WINDOW] {responder_name} may respond")
+    responder_agent.take_action(state, context, verbose=verbose)
 
 
 def initialize_game(
@@ -114,6 +145,20 @@ def run_turn(
     if state.game_over:
         return
 
+    # Defender may respond with instants before combat
+    _clear_mana_pools(state)
+    _offer_instant_window(
+        defending,
+        def_agent,
+        state,
+        event_log,
+        f"{active} passed priority after main phase 1. You may cast instants before combat begins.",
+        verbose,
+    )
+    if state.game_over:
+        return
+    _clear_mana_pools(state)
+
     # 4. Combat
     state.phase = "combat"
     event_log.set_context(state.turn, "combat")
@@ -143,12 +188,43 @@ def run_turn(
             if state.game_over:
                 return
 
+            # Combat trick window: active player first, then defender
+            _clear_mana_pools(state)
+            attacker_names = [
+                c.name
+                for c in player_state.battlefield
+                if c.instance_id in state.declared_attackers
+            ]
+            _offer_instant_window(
+                active,
+                agent,
+                state,
+                event_log,
+                f"Blockers have been declared. Attacking with: {', '.join(attacker_names)}. You may cast combat tricks.",
+                verbose,
+            )
+            if state.game_over:
+                return
+            _offer_instant_window(
+                defending,
+                def_agent,
+                state,
+                event_log,
+                f"Blockers declared. {active} may cast combat tricks. You may also respond with instants.",
+                verbose,
+            )
+            if state.game_over:
+                return
+            _clear_mana_pools(state)
+
             # Resolve damage
             result = resolve_combat_damage(state, event_log)
             if verbose:
                 print(f"  {result}")
             if state.game_over:
                 return
+
+    _clear_mana_pools(state)
 
     # 5. Main Phase 2
     state.phase = "main2"
@@ -164,6 +240,20 @@ def run_turn(
     agent.take_action(state, context, verbose=verbose)
     if state.game_over:
         return
+
+    # Defender may respond with instants before end step
+    _clear_mana_pools(state)
+    _offer_instant_window(
+        defending,
+        def_agent,
+        state,
+        event_log,
+        f"{active} passed priority after main phase 2. You may cast instants before the end step.",
+        verbose,
+    )
+    if state.game_over:
+        return
+    _clear_mana_pools(state)
 
     # 6. End step — discard to 7
     state.phase = "end"

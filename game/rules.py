@@ -150,6 +150,16 @@ def can_block(blocker: CardInstance, attacker: CardInstance) -> tuple[bool, str]
     return True, "ok"
 
 
+def has_instant_options(player: PlayerState, state: GameState, player_name: str) -> bool:
+    """Return True if the player has any castable instants in hand."""
+    for card in player.hand:
+        if card.definition.is_instant():
+            ok, _ = can_cast_spell(state, player_name, card)
+            if ok:
+                return True
+    return False
+
+
 def tap_lands_for_mana(
     player: PlayerState, amount_needed: int, preferred_colors: list[str] | None = None
 ) -> dict[str, int]:

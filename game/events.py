@@ -20,6 +20,7 @@ LIFE_CHANGE = "life_change"
 CARD_DIES = "card_dies"
 STACK_RESOLVE = "stack_resolve"
 PRIORITY_PASS = "priority_pass"
+INSTANT_WINDOW = "instant_window"
 JUDGE_APPEAL = "judge_appeal"
 JUDGE_RULING = "judge_ruling"
 COMMENTARY = "commentary"
@@ -102,6 +103,8 @@ class EventLog:
                 lines.append(f"  {e['card']} dies")
             elif ev == PRIORITY_PASS:
                 lines.append(f"  {e['player']} passes priority")
+            elif ev == INSTANT_WINDOW:
+                lines.append(f"  [instant window offered to {e.get('player', '?')}]")
             elif ev == JUDGE_RULING:
                 lines.append(f"\n[JUDGE] {e['ruling']}")
             elif ev == COMMENTARY:
