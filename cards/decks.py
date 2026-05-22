@@ -10,7 +10,7 @@ DECKS: dict[str, dict[str, int]] = {
         "Goblin Bully": 4,  # 2/1 for {1}{R}
         "Hulking Goblin": 4,  # 2/2 can't block for {1}{R}
         "Craven Giant": 4,  # 4/1 can't block for {2}{R}
-        "Hill Giant": 4,  # 3/3 for {3}{R}
+        "Minotaur Warrior": 4,  # 2/3 for {2}{R} (Hill Giant is a Printing reprint, not registered)
         "Volcanic Hammer": 4,  # deal 3 to any target (sorcery) for {1}{R}
         "Lava Axe": 4,  # deal 5 to target player (sorcery) for {4}{R}
         "Forked Lightning": 4,  # 4 damage divided among up to 3 creatures for {3}{R}
@@ -19,10 +19,10 @@ DECKS: dict[str, dict[str, int]] = {
     },
     "green_might": {
         "Forest": 24,
-        "Grizzly Bears": 4,  # 2/2 for {1}{G}
+        "Jungle Lion": 4,  # 2/1 for {G} (Grizzly Bears is a Printing reprint, not registered)
         "Gorilla Warrior": 4,  # 2/2 for {1}{G}{G}
         "Elvish Ranger": 4,  # 4/1 for {2}{G}
-        "Giant Spider": 4,  # 2/4 reach for {3}{G}
+        "Rowan Treefolk": 4,  # 3/4 for {3}{G} (Giant Spider is a Printing reprint, not registered)
         "Panther Warriors": 4,  # 3/2 for {2}{G}
         "Charging Rhino": 4,  # 4/4 can't be blocked by more than one for {3}{G}{G}
         "Spined Wurm": 4,  # 5/4 for {4}{G}
