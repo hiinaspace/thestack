@@ -14,6 +14,7 @@ import ollama
 
 from game.events import ACTION, EventLog
 from llm.agent import Agent
+from llm.persona import Persona
 from llm.prompts import (
     build_player_system_prompt,
     format_legal_actions,
@@ -25,21 +26,29 @@ from llm.tools import Toolbox
 class PlayerAgent:
     def __init__(
         self,
-        name: str,
+        persona: Persona,
         opponent_name: str,
         model: str,
         client: ollama.Client,
         event_log: EventLog,
     ) -> None:
-        self.name = name
+        self.persona = persona
+        self.name = persona.name
         self.event_log = event_log
-        self.toolbox = Toolbox(name=name)
+        self.toolbox = Toolbox(name=persona.name)
         self.agent = Agent(
-            name=name,
+            name=persona.name,
             model=model,
             client=client,
             event_log=event_log,
-            system_prompt=build_player_system_prompt(name, opponent_name),
+            system_prompt=build_player_system_prompt(
+                persona.name,
+                opponent_name,
+                identity=persona.identity,
+                strategy=persona.strategy,
+                opponent_notes=persona.opponent_entry(opponent_name),
+                recent_memory=persona.recent_memory(),
+            ),
             toolbox=self.toolbox,
         )
 
@@ -68,8 +77,6 @@ class PlayerAgent:
                 print(f"  [{self.name}] no valid action chosen, defaulting to pass")
             action_id = pass_id
 
-        # Log the committed action so spectators can see what was chosen
-        # without having to correlate REASONING+TOOL_CALL events themselves.
         chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
         self.event_log.append(
             ACTION,

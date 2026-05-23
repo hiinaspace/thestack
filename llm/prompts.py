@@ -7,14 +7,40 @@ from __future__ import annotations
 # ---------------------------------------------------------------------------
 
 
-def build_player_system_prompt(player_name: str, opponent_name: str) -> str:
-    return f"""You are {player_name}, playing Magic: The Gathering against {opponent_name}.
+def build_player_system_prompt(
+    player_name: str,
+    opponent_name: str,
+    *,
+    identity: str = "",
+    strategy: str = "",
+    opponent_notes: str = "",
+    recent_memory: str = "",
+) -> str:
+    """Compose the system prompt from persona files + the game-rules preamble.
 
-This conversation persists for the entire game. Each user turn shows you the
-current game state plus a numbered list of legal actions; you commit to one by
+    Empty strings for identity/strategy/etc. are allowed; the corresponding
+    section is simply omitted. The trailing tool/rules preamble is always
+    present.
+    """
+    sections: list[str] = [
+        f"You are {player_name}, playing Magic: The Gathering against {opponent_name}."
+    ]
+    if identity:
+        sections.append(f"## Your identity\n{identity}")
+    if strategy:
+        sections.append(f"## Your strategy for THIS game (written pre-game)\n{strategy}")
+    if opponent_notes:
+        sections.append(f"## What you remember about {opponent_name}\n{opponent_notes}")
+    if recent_memory:
+        sections.append(f"## Selected memories from past games\n{recent_memory}")
+
+    sections.append(
+        """## How this conversation works
+This chat persists for the entire game. Each user turn shows you the current
+game state plus a numbered list of legal actions; you commit to one by
 calling the submit_action tool.
 
-You have three tools:
+Tools:
   - take_note(note)        save a strategic note to your scratchpad (persists)
   - recall_strategy()      retrieve every note you've saved so far
   - submit_action(id, why) commit to a legal action and end this decision
@@ -29,14 +55,15 @@ Workflow each decision:
 Rules of the game:
   - Every action in the list is legal RIGHT NOW; the engine validates.
   - To do nothing this priority, pick the "Pass priority" action.
-  - You cannot see {opponent_name}'s hand or library.
+  - You cannot see your opponent's hand or library.
   - X-cost spells: never pick X=0; if an action lists X-options, use the
     biggest X you can afford that still serves the plan.
   - Targeted spells: skip any action tagged [NO VALID TARGETS]. Removal hits
     the opponent's most dangerous creature; pump hits your own attacker.
 
-Play to win, but you are also a character — your reasoning is the show.
-""".strip()
+Play to win, but you are also a character — your reasoning is the show."""
+    )
+    return "\n\n".join(sections).strip()
 
 
 def build_commentator_system_prompt() -> str:

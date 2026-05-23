@@ -7,3 +7,9 @@ games/
 *.jsonl
 .ruff_cache/
 .ty_cache/
+
+# Persona memory: identity.md is hand-curated and tracked; the rest are
+# rewritten by the LLM each game and stay local.
+personas/*/memory.md
+personas/*/opponents.md
+personas/*/strategy.md
