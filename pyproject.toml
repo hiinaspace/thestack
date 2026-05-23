@@ -14,6 +14,20 @@ dependencies = [
 run-game = "run_game:main"
 viewer = "viewer.server:main"
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Flat-layout package: list the top-level dirs explicitly so hatchling
+# doesn't try to auto-discover. run_game is a single-file module; the
+# viewer's static/ assets are not .py so they need force-include.
+[tool.hatch.build.targets.wheel]
+packages = ["llm", "game", "cards", "viewer"]
+include = ["run_game.py"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"viewer/static" = "viewer/static"
+
 [dependency-groups]
 dev = [
     "ruff>=0.11",
