@@ -6,10 +6,13 @@ requires-python = ">=3.12"
 dependencies = [
     "ollama>=0.6.2",
     "requests>=2.32",
+    "fastapi>=0.115",
+    "uvicorn>=0.32",
 ]
 
 [project.scripts]
 run-game = "run_game:main"
+viewer = "viewer.server:main"
 
 [dependency-groups]
 dev = [

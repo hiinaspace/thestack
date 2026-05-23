@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Stack — Replay</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header id="topbar">
+    <div id="title">The Stack</div>
+    <select id="game-picker" aria-label="game"></select>
+    <span id="game-summary"></span>
+  </header>
+
+  <section id="scrubber-row">
+    <button id="prev" title="previous observation">◄</button>
+    <input id="scrubber" type="range" min="0" max="0" value="0" step="1" />
+    <button id="next" title="next observation">►</button>
+    <span id="step-label">0 / 0</span>
+    <span id="state-label"></span>
+  </section>
+
+  <main>
+    <section id="board-panel"></section>
+
+    <section id="side-panel">
+      <nav id="tabs"></nav>
+      <div id="tab-body"></div>
+    </section>
+  </main>
+
+  <script src="/static/board.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

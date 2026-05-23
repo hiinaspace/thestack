@@ -112,7 +112,7 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
     def fmt_permanent(c: dict) -> str:
         name = c.get("name", "?")
         types = c.get("types", [])
-        is_creature = "CREATURE" in types
+        is_creature = "Creature" in types
         tapped = " [tapped]" if c.get("tapped") else ""
         sick = " (sick)" if c.get("summoningSick") else ""
         if is_creature:
@@ -123,7 +123,7 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         return f"  {name}{tapped}"
 
     # Acting player's battlefield
-    my_bf = zones_by_owner.get(acting_player_name, {}).get("BATTLEFIELD", [])
+    my_bf = zones_by_owner.get(acting_player_name, {}).get("Battlefield", [])
     lines.append(f"\nYOUR BATTLEFIELD ({len(my_bf)}):")
     for c in my_bf:
         lines.append(fmt_permanent(c))
@@ -131,7 +131,7 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         lines.append("  (empty)")
 
     # Opponent's battlefield
-    opp_bf = zones_by_owner.get(opponent_name, {}).get("BATTLEFIELD", [])
+    opp_bf = zones_by_owner.get(opponent_name, {}).get("Battlefield", [])
     lines.append(f"\n{opponent_name}'s BATTLEFIELD ({len(opp_bf)}):")
     for c in opp_bf:
         lines.append(fmt_permanent(c))
@@ -139,7 +139,7 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         lines.append("  (empty)")
 
     # Acting player's hand (visible because revealAll=true)
-    my_hand = zones_by_owner.get(acting_player_name, {}).get("HAND", [])
+    my_hand = zones_by_owner.get(acting_player_name, {}).get("Hand", [])
     lines.append(f"\nYOUR HAND ({len(my_hand)}):")
     for c in my_hand:
         name = c.get("name", "?")
@@ -157,8 +157,8 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
     lines.append(f"\n{opponent_name}'s HAND: {opp_hand_size} cards (hidden)")
 
     # Graveyards
-    my_gy = zones_by_owner.get(acting_player_name, {}).get("GRAVEYARD", [])
-    opp_gy = zones_by_owner.get(opponent_name, {}).get("GRAVEYARD", [])
+    my_gy = zones_by_owner.get(acting_player_name, {}).get("Graveyard", [])
+    opp_gy = zones_by_owner.get(opponent_name, {}).get("Graveyard", [])
     lines.append(f"\nYour graveyard: {[c['name'] for c in my_gy] or 'empty'}")
     lines.append(f"{opponent_name}'s graveyard: {[c['name'] for c in opp_gy] or 'empty'}")
 
@@ -219,17 +219,17 @@ def format_public_state_for_commentator(obs: dict) -> str:
         zones_by_owner.setdefault(owner_name, {})[z["zoneType"]] = z
 
     for pname in player_ids.values():
-        bf_zone = zones_by_owner.get(pname, {}).get("BATTLEFIELD", {})
+        bf_zone = zones_by_owner.get(pname, {}).get("Battlefield", {})
         cards = bf_zone.get("cards", [])
         if cards:
             creature_strs = [
                 f"{c['name']} {c.get('power')}/{c.get('toughness')}"
-                if "CREATURE" in c.get("types", [])
+                if "Creature" in c.get("types", [])
                 else c["name"]
                 for c in cards
             ]
             lines.append(f"  {pname} battlefield: {', '.join(creature_strs)}")
-        gy_zone = zones_by_owner.get(pname, {}).get("GRAVEYARD", {})
+        gy_zone = zones_by_owner.get(pname, {}).get("Graveyard", {})
         gy_cards = gy_zone.get("cards", [])
         if gy_cards:
             lines.append(f"  {pname} graveyard: {', '.join(c['name'] for c in gy_cards)}")

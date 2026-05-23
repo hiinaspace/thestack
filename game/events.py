@@ -14,6 +14,7 @@ THINKING = "thinking"  # internal chain-of-thought from Ollama think= block
 TOOL_CALL = "tool_call"  # an agent invoked one of its registered tools
 COMMENTARY = "commentary"  # commentator output for a turn
 ACTION = "action"  # an agent committed to an Argentum legalAction
+OBSERVATION = "observation"  # snapshot of Argentum game state (drives the viewer's board)
 GAME_OVER = "game_over"
 INFO = "info"
 

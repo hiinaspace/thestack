@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 
 from cards.decks import DECK_NAMES, get_deck
-from game.events import GAME_OVER, EventLog
+from game.events import GAME_OVER, OBSERVATION, EventLog
 from llm import argentum
 from llm.client import DEFAULT_MODEL, make_client
 from llm.commentator import CommentatorAgent
@@ -95,6 +95,7 @@ def run_game(
         deck_b,
         reveal_all=True,
     )
+    event_log.append(OBSERVATION, {"obs": obs})
 
     if verbose:
         print(f"\nEnv created: {env_id}")
@@ -164,6 +165,7 @@ def run_game(
                 stop_reason = f"argentum_error: {e}"
                 break
 
+            event_log.append(OBSERVATION, {"obs": obs})
             step_count += 1
 
     finally:
