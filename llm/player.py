@@ -1,4 +1,10 @@
-"""Player LLM agent — picks from Argentum's legal-action list."""
+"""Player agent — picks from Argentum's legal-action list via tool calls.
+
+Holds one persistent Ollama conversation across every decision in a game.
+The model's scratchpad (take_note) is preserved between decisions; reasoning
+is captured both as a free-text REASONING event (final assistant message) and
+as the structured `reasoning` argument the model passes to submit_action.
+"""
 
 from __future__ import annotations
 
@@ -6,104 +12,87 @@ import re
 
 import ollama
 
-from game.events import REASONING, THINKING, EventLog
+from game.events import ACTION, EventLog
+from llm.agent import Agent
 from llm.prompts import (
     build_player_system_prompt,
     format_legal_actions,
     format_observation,
 )
-
-MAX_RETRIES = 3
+from llm.tools import Toolbox
 
 
 class PlayerAgent:
-    def __init__(self, name: str, model: str, client: ollama.Client, event_log: EventLog) -> None:
+    def __init__(
+        self,
+        name: str,
+        opponent_name: str,
+        model: str,
+        client: ollama.Client,
+        event_log: EventLog,
+    ) -> None:
         self.name = name
-        self.model = model
-        self.client = client
         self.event_log = event_log
-        self._system_prompt: str | None = None
-
-    def _get_system_prompt(self, opponent_name: str) -> str:
-        if self._system_prompt is None:
-            self._system_prompt = build_player_system_prompt(self.name, opponent_name)
-        return self._system_prompt
+        self.toolbox = Toolbox(name=name)
+        self.agent = Agent(
+            name=name,
+            model=model,
+            client=client,
+            event_log=event_log,
+            system_prompt=build_player_system_prompt(name, opponent_name),
+            toolbox=self.toolbox,
+        )
 
     def choose_action(self, obs: dict, verbose: bool = False) -> int:
-        """
-        Ask the LLM to pick a legal action from obs["legalActions"].
-        Returns the chosen actionId.
-        Falls back to the first action (usually pass priority) if parsing fails.
-        """
         legal_actions = obs.get("legalActions", [])
         if not legal_actions:
             return 0
 
-        # Find opponent name from observation
-        opponent_name = next(
-            (p["name"] for p in obs.get("players", []) if p["name"] != self.name),
-            "Opponent",
-        )
-        system_prompt = self._get_system_prompt(opponent_name)
-
-        game_state_str = format_observation(obs, self.name)
-        actions_str = format_legal_actions(legal_actions)
-
-        # Build the valid action IDs set for validation
         valid_ids = {a["actionId"] for a in legal_actions}
-        pass_id = next(
-            (a["actionId"] for a in legal_actions if "pass" in a.get("description", "").lower()),
-            legal_actions[0]["actionId"],
+        pass_id = _find_pass_id(legal_actions)
+        self.toolbox.reset_turn(valid_ids)
+
+        user_msg = (
+            f"{format_observation(obs, self.name)}\n\n"
+            f"{format_legal_actions(legal_actions)}\n\n"
+            "Choose one of the numbered legal actions and call submit_action."
         )
 
-        user_msg = f"{game_state_str}\n\n{actions_str}\n\nChoose your action:"
+        response = self.agent.run(user_msg, verbose=verbose)
 
-        for attempt in range(MAX_RETRIES):
-            try:
-                response = self.client.chat(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_msg},
-                    ],
-                    think=True,
-                    options={"temperature": 0.6},
-                )
-            except Exception as e:
-                self.event_log.append(REASONING, {"player": self.name, "text": f"[LLM error: {e}]"})
-                return pass_id
-
-            msg = response.message
-
-            if msg.thinking:
-                self.event_log.append(THINKING, {"player": self.name, "text": msg.thinking})
-                if verbose:
-                    excerpt = msg.thinking[:200].replace("\n", " ")
-                    print(
-                        f"\n  [{self.name} thinking] {excerpt}{'...' if len(msg.thinking) > 200 else ''}"
-                    )
-
-            content = msg.content or ""
+        action_id = response.action_id
+        if action_id is None:
+            action_id = _parse_action_id_fallback(response.content, valid_ids)
+        if action_id is None or action_id not in valid_ids:
             if verbose:
-                print(f"\n[{self.name}] {content}")
-            if content:
-                self.event_log.append(REASONING, {"player": self.name, "text": content})
+                print(f"  [{self.name}] no valid action chosen, defaulting to pass")
+            action_id = pass_id
 
-            action_id = _parse_action_id(content, valid_ids)
-            if action_id is not None:
-                return action_id
+        # Log the committed action so spectators can see what was chosen
+        # without having to correlate REASONING+TOOL_CALL events themselves.
+        chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
+        self.event_log.append(
+            ACTION,
+            {
+                "player": self.name,
+                "action_id": action_id,
+                "description": chosen.get("description") if chosen else None,
+                "reasoning": response.reasoning,
+            },
+        )
+        return action_id
 
-            if verbose:
-                print(f"  [{self.name}] couldn't parse action (attempt {attempt + 1}), retrying")
 
-        if verbose:
-            print(f"  [{self.name}] parse failed {MAX_RETRIES}x, defaulting to pass")
-        return pass_id
+def _find_pass_id(legal_actions: list[dict]) -> int:
+    return next(
+        (a["actionId"] for a in legal_actions if "pass" in a.get("description", "").lower()),
+        legal_actions[0]["actionId"],
+    )
 
 
-def _parse_action_id(text: str, valid_ids: set[int]) -> int | None:
-    """Extract the first integer from the response that is a valid action ID."""
-    for m in re.finditer(r"\b(\d+)\b", text):
+def _parse_action_id_fallback(text: str, valid_ids: set[int]) -> int | None:
+    """If the model wrote a number instead of calling submit_action, salvage it."""
+    for m in re.finditer(r"\b(\d+)\b", text or ""):
         candidate = int(m.group(1))
         if candidate in valid_ids:
             return candidate

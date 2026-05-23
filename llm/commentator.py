@@ -1,10 +1,16 @@
-"""Commentator LLM — receives public state, produces turn-by-turn commentary."""
+"""Commentator agent — narrates each turn from public state only.
+
+Like PlayerAgent, the commentator keeps one persistent conversation across the
+game so it can build a narrative arc (callbacks, archetype reads, turning-point
+recognition) instead of restarting cold each turn.
+"""
 
 from __future__ import annotations
 
 import ollama
 
 from game.events import COMMENTARY, EventLog
+from llm.agent import Agent
 from llm.client import DEFAULT_MODEL
 from llm.prompts import build_commentator_system_prompt, format_public_state_for_commentator
 
@@ -13,38 +19,31 @@ class CommentatorAgent:
     def __init__(
         self, client: ollama.Client, event_log: EventLog, model: str = DEFAULT_MODEL
     ) -> None:
-        self.client = client
         self.event_log = event_log
-        self.model = model
-        self._system_prompt = build_commentator_system_prompt()
-
-    def comment_on_turn(self, obs: dict, turn: int, verbose: bool = False) -> str:
-        """Generate commentary for the just-completed turn."""
-        board_summary = format_public_state_for_commentator(obs)
-
-        prompt = (
-            f"Turn {turn} just completed. Current board state:\n\n"
-            f"{board_summary}\n\n"
-            "Provide 2-4 sentences of commentary."
+        self.agent = Agent(
+            name="Commentator",
+            model=model,
+            client=client,
+            event_log=event_log,
+            system_prompt=build_commentator_system_prompt(),
+            toolbox=None,
+            temperature=0.9,
+            think=False,
+            log_content_as=None,  # commentary is logged as COMMENTARY below
         )
 
-        try:
-            response = self.client.chat(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": self._system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
-                think=False,
-                options={"temperature": 0.9},
-            )
-            text = response.message.content or ""
-        except Exception as e:
-            text = f"[Commentator unavailable: {e}]"
-
+    def comment_on_turn(self, obs: dict, turn: int, verbose: bool = False) -> str:
+        prompt = (
+            f"Turn {turn} just completed. Current public state:\n\n"
+            f"{format_public_state_for_commentator(obs)}\n\n"
+            "Give 2-4 sentences of commentary. Refer back to earlier turns when relevant."
+        )
+        response = self.agent.run(prompt, verbose=False)
+        # The Agent already logged a REASONING event for the response content;
+        # additionally publish it as a COMMENTARY event for the viewer.
+        text = response.content
         if text:
+            self.event_log.append(COMMENTARY, {"text": text, "turn": turn})
             if verbose:
                 print(f"\n[COMMENTARY] {text}")
-            self.event_log.append(COMMENTARY, {"text": text, "turn": turn})
-
         return text

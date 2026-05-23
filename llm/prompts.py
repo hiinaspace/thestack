@@ -10,28 +10,32 @@ from __future__ import annotations
 def build_player_system_prompt(player_name: str, opponent_name: str) -> str:
     return f"""You are {player_name}, playing Magic: The Gathering against {opponent_name}.
 
-Each turn you will be shown the current game state and a numbered list of legal actions.
-Respond with the NUMBER of the action you want to take, followed by a brief sentence explaining why.
+This conversation persists for the entire game. Each user turn shows you the
+current game state plus a numbered list of legal actions; you commit to one by
+calling the submit_action tool.
 
-Rules:
-- The game engine enforces all rules — every action in the list is legal right now.
-- To do nothing (pass priority, end your turn), pick the "Pass priority" action.
-- Play to win. Think about card advantage, board position, and life totals.
-- You cannot see your opponent's hand.
+You have three tools:
+  - take_note(note)        save a strategic note to your scratchpad (persists)
+  - recall_strategy()      retrieve every note you've saved so far
+  - submit_action(id, why) commit to a legal action and end this decision
 
-Format your response exactly like:
-  <number>. <one sentence of reasoning>
+Workflow each decision:
+  1. Read the game state and legal actions.
+  2. Optionally call take_note or recall_strategy to think out loud or check
+     your earlier plans.
+  3. Call submit_action exactly once with the action id and a one-or-two
+     sentence in-character reasoning — that text is shown to spectators.
 
-Example: "3. Cast Hill Giant to build board presence."
-""".strip()
+Rules of the game:
+  - Every action in the list is legal RIGHT NOW; the engine validates.
+  - To do nothing this priority, pick the "Pass priority" action.
+  - You cannot see {opponent_name}'s hand or library.
+  - X-cost spells: never pick X=0; if an action lists X-options, use the
+    biggest X you can afford that still serves the plan.
+  - Targeted spells: skip any action tagged [NO VALID TARGETS]. Removal hits
+    the opponent's most dangerous creature; pump hits your own attacker.
 
-
-def build_judge_system_prompt() -> str:
-    return """You are a certified Magic: The Gathering judge overseeing a game.
-
-When a player appeals a ruling, you will receive the situation and the current game state.
-Provide a concise ruling (2-4 sentences) citing the relevant rule where possible.
-Be honest if you are uncertain — say so rather than guessing.
+Play to win, but you are also a character — your reasoning is the show.
 """.strip()
 
 
@@ -39,8 +43,9 @@ def build_commentator_system_prompt() -> str:
     return """You are a tournament coverage analyst providing commentary for a Magic: The Gathering game.
 
 You see the public game state — both battlefields, graveyards, life totals — but not either player's hand or library.
-Write 2-4 sentences of insightful, narrative commentary after each turn.
-Identify turning points, speculate on hand contents based on play patterns, and build a story about who's winning and why.
+Each user turn gives you the current public state; produce 2-4 sentences of
+insightful, narrative commentary. You have a persistent memory of prior turns,
+so build an arc: who's winning, who's adapting, what was the turning point.
 """.strip()
 
 

@@ -3,7 +3,7 @@
 > *A harness for watching language models argue about spells, make questionable tactical decisions, and occasionally appeal to a judge who may also be wrong.*
 
 **Working title:** The Stack (the MTG mechanic; also the system's layered architecture)
-**Status:** Pre-implementation charter
+**Status:** Phase 3 — persona harness pivot (in progress)
 **Primary goal:** Entertainment and research artifact, not performance optimization
 
 ---
@@ -102,87 +102,90 @@ Several tools exist for web-based MTG goldfishing/virtual play without rules enf
 ## Architecture Overview
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                         HARNESS LAYER                            │
-│                                                                  │
-│  ┌─────────────┐    natural language    ┌─────────────┐          │
-│  │  LLM Player │◄──────────────────────►│  LLM Player │          │
-│  │     (A)     │                        │     (B)     │          │
-│  └──────┬──────┘                        └──────┬──────┘          │
-│         │ tool calls                           │ tool calls      │
-│         ▼                                      ▼                 │
-│  ┌──────────────────────────────────────────────────────────┐    │
-│  │                   Game State Manager                     │    │
-│  │  • canonical zones: library/hand/battlefield/grave/exile │    │
-│  │  • stack, priority, turn/phase structure                 │    │
-│  │  • hidden state (libraries, opponent hands)              │    │
-│  │  • legality oracle (XMage or local rules engine)         │    │
-│  │  • event log (append-only, used for replay)              │    │
-│  └───────────────┬──────────────────────────────────────────┘    │
-│                  │ events (SSE / WebSocket)                       │
-│        ┌─────────┼──────────┬──────────────┐                     │
-│        ▼         ▼          ▼              ▼                     │
-│  ┌──────────┐ ┌───────┐ ┌──────────┐ ┌──────────────────────┐   │
-│  │ Judge    │ │Commen-│ │  Board   │ │  Spectator / Replay  │   │
-│  │ LLM      │ │tator  │ │ Renderer │ │  Web Client          │   │
-│  │ (appeal/ │ │ LLM   │ │ (HTML/JS │ │  (live view +        │   │
-│  │  watch)  │ │(public│ │  canvas, │ │   turn scrubber,     │   │
-│  │          │ │ state │ │  Scryfall│ │   reasoning trace    │   │
-│  │          │ │ only) │ │  art)    │ │   overlay)           │   │
-│  └──────────┘ └───────┘ └──────────┘ └──────────────────────┘   │
-└──────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                       PYTHON HARNESS (thestack/)                       │
+│                                                                        │
+│  ┌────────────────────┐  natural-language     ┌────────────────────┐   │
+│  │  PersonaAgent A    │  reasoning + tool     │  PersonaAgent B    │   │
+│  │  (one Ollama       │  calls per decision   │  (one Ollama       │   │
+│  │   conversation     │ ◄───── shared ──────► │   conversation     │   │
+│  │   across the game) │  spectator transcript │   across the game) │   │
+│  └─────────┬──────────┘                       └──────────┬─────────┘   │
+│            │  submit_action(id, reasoning)               │             │
+│            │  + take_note / recall_strategy              │             │
+│            ▼                                             ▼             │
+│            ┌──────────────────────────────────────────────┐            │
+│            │  Argentum gym-server (Kotlin, REST :8081)    │            │
+│            │  — rules engine, legality oracle,            │            │
+│            │    canonical state, hidden info,             │            │
+│            │    legalActions per decision point           │            │
+│            └──────────────────────┬───────────────────────┘            │
+│                                   │ observations                       │
+│            ┌──────────────────────┴───────────────────────┐            │
+│            │  Commentator (separate persistent agent)     │            │
+│            │  Reflector (post-game; writes persona memory)│            │
+│            └──────────────────────┬───────────────────────┘            │
+│                                   ▼                                    │
+│                       games/{id}.jsonl event log                       │
+│                                   │                                    │
+└───────────────────────────────────┼────────────────────────────────────┘
+                                    ▼
+                     ┌─────────────────────────────┐
+                     │  Replay viewer (FastAPI +   │
+                     │  vanilla HTML)              │
+                     │  • board + scrubber         │
+                     │  • per-persona thoughts     │
+                     │  • commentary track         │
+                     │  • persona memory snapshot  │
+                     └─────────────────────────────┘
 ```
 
-**Game State Manager** — canonical source of truth. Tracks zones (library, hand, battlefield, graveyard, exile, stack), life totals, counters, turn/phase structure, and hidden state. Exposes a structured tool API to player LLMs. Appends every state transition to an immutable event log used for replay.
+**Rules engine** — Argentum gym-server (`/home/s/lib/argentum-engine`) is the
+sole source of truth for legality, zones, hidden info, and the stack. We talk
+to it via plain REST (`POST /envs`, `POST /envs/{id}/step`, etc.). The Python
+harness intentionally has no rules logic of its own.
 
-**Player LLMs** — communicate primarily in natural language with each other and with the judge. Use structured tool calls for actions that change board state. Reasoning traces logged verbatim.
+**Player agents** — each `PersonaAgent` holds ONE Ollama conversation that
+persists across every decision in a game. State accumulates: prior reasoning,
+prior tool calls (`take_note` scratchpad), the running game transcript. There
+is no per-decision prompt rebuild. Agents commit to legal actions via the
+`submit_action` tool; the engine validates.
 
-**Judge LLM** — separate context and system prompt. Watches the game transcript. Invoked on appeal or proactively for detected rules errors. Has `scryfall_lookup` and `rules_search` tools; cites sources; may still be wrong.
+**Commentator** — separate persistent agent, public-state only, narrates each
+turn with awareness of previous turns it has already narrated.
 
-**Commentator LLM** — fourth LLM role, distinct from judge and players. Receives only public game state (no hidden hands) plus the natural language transcript between players. Prompted as a tournament coverage analyst: provides play-by-play narration, reads on each pilot's archetype and strategy, and color commentary on key moments and mistakes. Updated after each turn or major game event. Its output is the primary entertainment text layer for spectators.
+**Personas (Phase B)** — named identities with markdown files for cross-game
+memory (`personas/<name>/identity.md`, `memory.md`, `opponents.md`,
+`strategy.md`). Pre-game strategy pass reads the persona's notes; post-game
+reflector writes new ones.
 
-**Board Renderer** — lightweight HTML/JS canvas serving Scryfall card art at zone positions. Tap = 90° rotation. Renders from event stream; LLMs do not drive it directly.
-
-**Spectator / Replay Web Client** — the primary viewing interface. Connects to the live event stream for in-progress games. For completed games, loads the event log and renders any turn on demand with a scrubber. Each turn shows: board state, the player's reasoning trace for that turn, commentator output, and any judge rulings. Shareable by game ID. No video recording needed — the structured event log is the artifact.
+**Replay viewer (Phase C)** — FastAPI + vanilla HTML/JS. Reads the JSONL event
+log; shows board state at any step, per-persona thinking/reasoning tabs,
+commentary track, and the persona memory snapshot as it was at game start.
 
 ---
 
 ## Interaction Model
 
-Player LLMs interact primarily in **natural language** — announcing plays, representing threats, asking the opponent to respond, describing what they're doing and why. This produces readable, entertaining transcripts.
-
-Structured **tool calls** handle state mutations and visual sync:
+Each `PersonaAgent` is a single Ollama conversation that lasts the whole game.
+The harness feeds it a new user turn each time Argentum yields control:
 
 ```
-# Zone and state tools
-draw_card()
-play_card(card_id, targets=[...])
-activate_ability(permanent_id, ability_index, targets=[...])
-tap(permanent_id)
-declare_attackers(attacker_ids=[...])
-declare_blockers(assignments={attacker_id: [blocker_ids]})
-pass_priority()
-concede()
+User:  <game state at turn 3, combat step>
+       <numbered legal actions>
+       Choose one and call submit_action.
 
-# Information tools
-get_game_state()           # full visible state
-get_hand()                 # own hand (hidden from opponent)
-get_valid_actions()        # what the rules engine says is legal right now
-scryfall_lookup(card_name) # card text, oracle text, rulings
-
-# Judge invocation
-appeal(situation: str)     # request judge ruling; opponent notified
+Tools available to the player agent:
+  take_note(note)         — append a strategic note to the persistent scratchpad
+  recall_strategy()       — read back every note saved so far
+  submit_action(id, why)  — commit to one legal action and end this decision
+                            (the `why` text is the in-character spectator line)
 ```
 
-Hidden state (library contents, opponent hand) is managed server-side.
-
----
-
-## Judge System
-
-The judge LLM has a distinct persona and system prompt. It receives the full game transcript, the specific situation being appealed, and access to `scryfall_lookup` and `rules_search` tools. It issues a ruling in natural language with cited reasoning. Either player may appeal again, producing a mini-dialogue that is itself entertaining. The judge's ruling is binding unless both players agree to override.
-
-Intentional design choice: the judge *will* occasionally get things wrong. Layer interactions, replacement effect ordering, and errata history are genuinely hard. A judge that confidently misrules a Humility + Opalescence interaction, then has to reverse after being shown the Gatherer ruling, is more interesting than one that refuses to rule.
+Because each agent is a single conversation, by turn 5 it has the full text of
+its own deliberations from turns 1-4, every action it took, and every tool
+result it received. That is the "running context" the entertainment value
+depends on.
 
 ---
 
@@ -201,12 +204,32 @@ This is the component closest to the gap in existing sports commentary research:
 
 ## Multi-Game Session Structure
 
-A session is N games between two LLM pilots with fixed or adjustable decks. Between games:
-- Each pilot receives a game summary (key turning points, what the opponent's deck did, what worked/didn't)
-- Pilot may request sideboard adjustments or update its opponent model
-- Opponent model is updated explicitly in context ("opponent appears to be running a combo finish off Thassa's Oracle; prioritize interaction")
+Personas have markdown files that carry across games (target of Phase B):
 
-The commentator produces a session narrative that arcs across games — tracking which pilot has adapted, which hasn't, and what the meta of this matchup has become.
+```
+personas/
+  aria/
+    identity.md     # name, voice, playstyle — fixed personality
+    memory.md       # rolling log of past games (LLM-curated)
+    opponents.md    # what Aria remembers about specific opponents
+    strategy.md     # current-deck strategy notes
+  bryn/
+    …
+```
+
+Per-game flow:
+1. **Pre-game**: agent reads `identity.md` + `memory.md` + `opponents.md` (the
+   relevant opponent entry) + their deck list. Writes a fresh `strategy.md`
+   block for this game.
+2. **In-game**: as described above — one persistent Ollama conversation per
+   agent, scratchpad via `take_note`.
+3. **Post-game**: a Reflector pass takes the full game JSONL + scratchpad +
+   existing memory files and writes structured updates back into
+   `memory.md` / `opponents.md`. The persona is now "smarter" for next game.
+
+Markdown is the chosen format because it is human-inspectable and
+hand-editable — operator can read what the AI thinks it knows, and tweak the
+persona's voice or facts between sessions if desired.
 
 ---
 
@@ -247,11 +270,15 @@ Designed to run entirely on local hardware (reference: RTX 4090, Linux):
 ## Explicit Non-Goals (for v1)
 
 - Real-time game variants (fighting games, RTS) — separate project
-- Full card set coverage — start with a curated limited card pool
+- Full card set coverage — Argentum's Portal set is the current pool
 - Fine-tuning models on game data — harness first, training loop later
-- Perfect rules enforcement — judge LLM covers the gap; perfection is not the point
+- Python-side rules enforcement — Argentum is the only rules authority
 - Multiplayer (>2 players) — Commander is tempting but complexity is high; defer
 - Text-to-speech commentary audio — the text layer is enough for v1
+- Judge LLM — removed for now. Argentum makes ruling disputes nearly impossible
+  (every action in the list is already legal). May reintroduce later as a
+  commentary-tier voice ("the judge would have caught that…") rather than as
+  an oracle.
 
 ---
 

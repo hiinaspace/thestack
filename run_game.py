@@ -39,8 +39,8 @@ def run_game(
 
     client = make_client()
     agents = {
-        player_a: PlayerAgent(player_a, model, client, event_log),
-        player_b: PlayerAgent(player_b, model, client, event_log),
+        player_a: PlayerAgent(player_a, player_b, model, client, event_log),
+        player_b: PlayerAgent(player_b, player_a, model, client, event_log),
     }
     commentator = CommentatorAgent(client, event_log, model=model)
 
@@ -60,60 +60,70 @@ def run_game(
 
     current_turn = obs.get("turnNumber", 0)
     step_count = 0
+    stop_reason = "step_limit"
 
     try:
         while step_count < max_steps:
             if obs.get("terminated"):
+                stop_reason = "normal"
                 break
 
             agent_id = obs.get("agentToAct")
             if agent_id is None:
+                stop_reason = "no_agent_to_act"
                 break
 
-            # Resolve agent name from id
             acting_name = next((p["name"] for p in obs["players"] if p["id"] == agent_id), None)
             if acting_name is None:
+                stop_reason = "unknown_acting_player"
                 break
 
-            # Turn boundary: fire commentator when turn increments
+            # Track turn/phase on the event log so subsequent events are tagged
+            phase = obs.get("phase", "?")
+            step_name = obs.get("step", "?")
+            event_log.set_context(turn=obs.get("turnNumber", 0), phase=f"{phase}/{step_name}")
+
             new_turn = obs.get("turnNumber", 0)
-            if new_turn > current_turn and current_turn > 0:
-                commentator.comment_on_turn(obs, current_turn, verbose=verbose)
             if new_turn > current_turn:
+                if current_turn > 0:
+                    commentator.comment_on_turn(obs, current_turn, verbose=verbose)
                 current_turn = new_turn
                 if verbose:
-                    phase = obs.get("phase", "?")
-                    step = obs.get("step", "?")
                     lives = {p["name"]: p["lifeTotal"] for p in obs["players"]}
                     print(f"\n{'=' * 60}")
-                    print(f"TURN {current_turn} | {phase}/{step} | {lives}")
+                    print(f"TURN {current_turn} | {phase}/{step_name} | {lives}")
 
             agent = agents.get(acting_name)
             if agent is None:
+                stop_reason = "unknown_acting_player"
                 break
 
-            # Show phase header on transitions in verbose mode
+            legal_actions = obs.get("legalActions", [])
+            if not legal_actions:
+                # Argentum is waiting on a structured decision (pendingDecision)
+                # which our harness does not yet implement. Bail out cleanly.
+                stop_reason = "pending_decision_unsupported"
+                break
+
             if verbose:
-                phase = obs.get("phase", "?")
-                step_name = obs.get("step", "?")
-                legal_count = len(obs.get("legalActions", []))
-                print(f"\n  [{acting_name}] {phase}/{step_name} — {legal_count} actions")
+                print(f"\n  [{acting_name}] {phase}/{step_name} — {len(legal_actions)} actions")
 
             action_id = agent.choose_action(obs, verbose=verbose)
 
             if verbose:
-                chosen = next(
-                    (a for a in obs.get("legalActions", []) if a["actionId"] == action_id),
-                    None,
-                )
+                chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
                 desc = chosen["description"] if chosen else str(action_id)
                 print(f"  [{acting_name}] -> {desc}")
 
-            obs = argentum.step(env_id, action_id)
+            try:
+                obs = argentum.step(env_id, action_id)
+            except Exception as e:
+                stop_reason = f"argentum_error: {e}"
+                break
+
             step_count += 1
 
     finally:
-        # Final commentary
         commentator.comment_on_turn(obs, current_turn, verbose=verbose)
 
         print(f"\n{'=' * 60}")
@@ -123,8 +133,8 @@ def run_game(
             print(f"GAME OVER — Winner: {winner or 'draw'}")
             event_log.append(GAME_OVER, {"winner": winner, "reason": "normal"})
         else:
-            print(f"Game stopped after {step_count} steps (limit reached)")
-            event_log.append(GAME_OVER, {"winner": None, "reason": "step_limit"})
+            print(f"Game stopped after {step_count} steps ({stop_reason})")
+            event_log.append(GAME_OVER, {"winner": None, "reason": stop_reason})
 
         print(f"Steps taken: {step_count}")
         print(f"Replay log: {log_path}")
