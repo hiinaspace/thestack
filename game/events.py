@@ -15,6 +15,7 @@ TOOL_CALL = "tool_call"  # an agent invoked one of its registered tools
 COMMENTARY = "commentary"  # commentator output for a turn
 ACTION = "action"  # an agent committed to an Argentum legalAction
 AUTOPASS = "autopass"  # harness picked Pass priority without consulting the LLM
+ENGINE_EVENT = "engine_event"  # compact event feed returned by Argentum /advance
 OBSERVATION = "observation"  # snapshot of Argentum game state (drives the viewer's board)
 GAME_OVER = "game_over"
 INFO = "info"

@@ -60,6 +60,9 @@ document.addEventListener("keydown", (e) => {
   try {
     const oracle = await fetch("/api/oracle").then((r) => r.json());
     Object.assign(state.oracle, oracle);
+    for (const [name, card] of Object.entries(oracle)) {
+      state.oracle[name.toLowerCase()] = card;
+    }
   } catch (_e) { /* viewer still works without it */ }
 
   const list = await fetch("/api/games").then((r) => r.json());
@@ -316,6 +319,9 @@ function eventEl(e) {
       break;
     case "commentary":
       body.textContent = e.text || "";
+      break;
+    case "engine_event":
+      body.textContent = (e.events || []).map((ev) => ev.text || ev.type).join("\n");
       break;
     case "info":
       body.textContent = e.kind ? `[${e.kind}] ${e.text || ""}` : JSON.stringify(e);

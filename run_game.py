@@ -7,7 +7,7 @@ import uuid
 from pathlib import Path
 
 from cards.decks import DECK_NAMES, get_deck
-from game.events import ACTION, AUTOPASS, GAME_OVER, OBSERVATION, EventLog
+from game.events import ACTION, AUTOPASS, ENGINE_EVENT, GAME_OVER, OBSERVATION, EventLog
 from llm import argentum
 from llm.autopass import autopass_action_id
 from llm.client import DEFAULT_MODEL, make_client
@@ -190,7 +190,6 @@ def run_game(
                 }
                 # Still log a thin ACTION event so the timeline reads cleanly.
                 event_log.append(ACTION, action_record)
-                turn_actions.append(action_record)
                 if verbose:
                     print(f"  [{acting_name}] {phase}/{step_name} — autopass ({reason})")
             else:
@@ -198,19 +197,26 @@ def run_game(
                     print(f"\n  [{acting_name}] {phase}/{step_name} — {len(legal_actions)} actions")
                 action_id = agent.choose_action(obs, verbose=verbose)
                 chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
-                turn_actions.append(
-                    {
-                        "player": acting_name,
-                        "action_id": action_id,
-                        "description": chosen.get("description") if chosen else str(action_id),
-                    }
-                )
+                action_record = {
+                    "player": acting_name,
+                    "action_id": action_id,
+                    "description": chosen.get("description") if chosen else str(action_id),
+                }
                 if verbose:
                     desc = chosen["description"] if chosen else str(action_id)
                     print(f"  [{acting_name}] -> {desc}")
 
             try:
-                obs = argentum.step(env_id, action_id)
+                advance = argentum.advance(env_id, action_id, auto_resolve_decisions=True)
+                obs = advance["observation"]
+                engine_events = advance.get("events") or []
+                if engine_events:
+                    action_record["engine_events"] = engine_events
+                    event_log.append(
+                        ENGINE_EVENT,
+                        {"action_id": action_id, "player": acting_name, "events": engine_events},
+                    )
+                turn_actions.append(action_record)
             except Exception as e:
                 stop_reason = f"argentum_error: {e}"
                 break

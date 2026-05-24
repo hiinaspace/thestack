@@ -36,8 +36,7 @@ function buildCardTooltip(c) {
   // Prefer scryfall data (loaded into window.thestackOracle by app.js init)
   // when the obs's own oracleText is empty; the gym only populates it for
   // lands and a few other rule-based cards.
-  const oracleMap = window.thestackOracle || {};
-  const scry = oracleMap[c.name] || null;
+  const scry = lookupOracle(c);
 
   const cost = c.manaCost || scry?.mana_cost || "";
   const typeLine = scry?.type_line || (c.types?.length ? c.types.join(", ") : "");
@@ -66,6 +65,19 @@ function buildCardTooltip(c) {
     tip.appendChild(o);
   }
   return tip;
+}
+
+function lookupOracle(c) {
+  const oracleMap = window.thestackOracle || {};
+  const name = (c.name || "").trim();
+  const definitionName = (c.cardDefinitionId || "").split("#")[0].trim();
+  return (
+    oracleMap[name] ||
+    oracleMap[name.toLowerCase()] ||
+    oracleMap[definitionName] ||
+    oracleMap[definitionName.toLowerCase()] ||
+    null
+  );
 }
 
 function zoneEl(label, cards) {

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from llm import oracle
+
 # ---------------------------------------------------------------------------
 # System prompts
 # ---------------------------------------------------------------------------
@@ -64,6 +66,9 @@ Rules of the game:
     mana on a spell — mana left in your pool evaporates at end of step. If
     you have no spell to cast, pass priority instead of tapping a land for
     nothing.
+  - If an action says "equivalent engine variants collapsed", that is one
+    strategic choice with multiple identical engine bindings, not multiple
+    spells or extra plays.
 
 Play to win, but you are also a character — your reasoning is the show."""
     )
@@ -74,9 +79,14 @@ def build_commentator_system_prompt() -> str:
     return """You are a tournament coverage analyst providing commentary for a Magic: The Gathering game.
 
 You see the public game state — both battlefields, graveyards, life totals — but not either player's hand or library.
-Each user turn gives you the current public state; produce 2-4 sentences of
-insightful, narrative commentary. You have a persistent memory of prior turns,
-so build an arc: who's winning, who's adapting, what was the turning point.
+Each user turn gives you the current public state and the notable public actions
+that happened. Produce 1-4 sentences of insightful commentary: use one terse
+sentence when little changed, and save longer color for real swings.
+
+You have a persistent memory of prior turns, so build an arc: who's winning,
+who's adapting, what was the turning point. Be precise about combat: a block is
+not automatically a trade. Only say a creature died, was sacrificed, or traded
+if the action log or resulting battlefield/graveyard clearly supports it.
 """.strip()
 
 
@@ -115,8 +125,7 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
 
     def fmt_permanent(c: dict) -> str:
         name = c.get("name", "?")
-        types = c.get("types", [])
-        is_creature = "Creature" in types
+        is_creature = _has_card_type(c, "CREATURE")
         tapped = " [tapped]" if c.get("tapped") else ""
         sick = " (sick)" if c.get("summoningSick") else ""
         if is_creature:
@@ -150,8 +159,8 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         cost = c.get("manaCost", "")
         oracle = c.get("oracleText", "").replace("\n", "; ")
         types = "/".join(t.capitalize() for t in c.get("types", []))
-        p, t = c.get("power"), c.get("toughness")
-        pt = f" {p}/{t}" if p is not None else ""
+        p, t = _power_toughness(c)
+        pt = f" {p}/{t}" if p is not None and t is not None else ""
         lines.append(f"  {name}{pt} {cost} — {types}{': ' + oracle if oracle else ''}")
     if not my_hand:
         lines.append("  (empty)")
@@ -191,8 +200,19 @@ def format_legal_actions(legal_actions: list[dict]) -> str:
     """Format the legalActions list into a numbered menu."""
     if not legal_actions:
         return "No legal actions available."
+    groups: dict[tuple, list[dict]] = {}
+    ordered_keys: list[tuple] = []
+    for action in legal_actions:
+        key = _legal_action_key(action)
+        if key not in groups:
+            groups[key] = []
+            ordered_keys.append(key)
+        groups[key].append(action)
+
     lines = ["LEGAL ACTIONS:"]
-    for a in legal_actions:
+    for key in ordered_keys:
+        grouped = groups[key]
+        a = grouped[0]
         action_id = a["actionId"]
         desc = a.get("description", "?")
         cost = a.get("manaCost")
@@ -202,6 +222,8 @@ def format_legal_actions(legal_actions: list[dict]) -> str:
             suffix = f" [cost: {cost}]"
         if not affordable:
             suffix += " [can't afford]"
+        if len(grouped) > 1:
+            suffix += f" [{len(grouped)} equivalent engine variants collapsed]"
         lines.append(f"  {action_id}: {desc}{suffix}")
     return "\n".join(lines)
 
@@ -228,7 +250,7 @@ def format_public_state_for_commentator(obs: dict) -> str:
         if cards:
             creature_strs = [
                 f"{c['name']} {c.get('power')}/{c.get('toughness')}"
-                if "Creature" in c.get("types", [])
+                if _has_card_type(c, "CREATURE")
                 else c["name"]
                 for c in cards
             ]
@@ -239,3 +261,44 @@ def format_public_state_for_commentator(obs: dict) -> str:
             lines.append(f"  {pname} graveyard: {', '.join(c['name'] for c in gy_cards)}")
 
     return "\n".join(lines)
+
+
+def _has_card_type(card: dict, card_type: str) -> bool:
+    """Argentum serializes card types as uppercase enum names."""
+    wanted = card_type.upper()
+    return any(str(t).upper() == wanted for t in card.get("types", []))
+
+
+def _power_toughness(card: dict) -> tuple[object | None, object | None]:
+    """Use projected stats when present, printed oracle stats otherwise."""
+    power = card.get("power")
+    toughness = card.get("toughness")
+    if power is not None or toughness is not None:
+        return power, toughness
+    oracle_card = oracle.card(card.get("name", ""))
+    if oracle_card is None:
+        return None, None
+    return oracle_card.get("power"), oracle_card.get("toughness")
+
+
+def _legal_action_key(action: dict) -> tuple:
+    """Group engine-distinct but strategically identical action variants.
+
+    Argentum may expose one action per identical card copy or mana source. For
+    a text-only LLM menu those are the same choice; keeping only the first
+    representative avoids implying that multiple copies are being cast.
+    Target ids stay in the key so same-named but distinct targets do not merge.
+    """
+    return (
+        action.get("kind"),
+        action.get("description"),
+        action.get("manaCost"),
+        action.get("affordable", True),
+        action.get("hasXCost", False),
+        action.get("minTargets"),
+        action.get("maxTargets"),
+        action.get("requiresDamageDistribution", False),
+        action.get("isManaAbility", False),
+        action.get("isDecisionOption", False),
+        tuple(action.get("targetEntityIds") or []),
+    )

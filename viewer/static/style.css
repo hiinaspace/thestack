@@ -12,6 +12,7 @@
   --tool: #c4b5fd;
   --action: #fde68a;
   --commentary: #86efac;
+  --engine: #93c5fd;
   --info: #fca5a5;
 }
 
@@ -80,11 +81,16 @@ body {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  flex: 0 0 8ch;
+  text-align: right;
 }
 
 #state-label {
   color: var(--accent);
   white-space: nowrap;
+  flex: 0 0 330px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 #show-all-toggle {
@@ -105,6 +111,7 @@ body {
   padding: 4px 10px;
   cursor: pointer;
   font: inherit;
+  width: 38px;
 }
 
 main {
@@ -288,6 +295,8 @@ main {
 .event.tool_call .event-head { color: var(--tool); }
 .event.tool_call .event-body { color: var(--tool); font-size: 12px; }
 .event.action .event-head { color: var(--action); }
+.event.engine_event .event-head { color: var(--engine); }
+.event.engine_event .event-body { color: var(--engine); font-size: 12px; }
 .event.commentary .event-head { color: var(--commentary); }
 .event.commentary .event-body { color: var(--commentary); }
 .event.info .event-head { color: var(--info); }

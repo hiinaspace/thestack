@@ -44,9 +44,11 @@ class CommentatorAgent:
             f"Turn {turn} just completed.\n\n"
             f"{action_section}\n\n"
             f"Resulting public state:\n{format_public_state_for_commentator(obs)}\n\n"
-            "Give 2-4 sentences of commentary on what just happened this turn. "
-            "Narrate the actions players took — what they cast, who attacked "
-            "whom, what traded. Refer back to earlier turns when relevant."
+            "Give 1-4 sentences of commentary on what just happened this turn. "
+            "Use one terse sentence if nothing much changed. Narrate concrete "
+            "actions — what was cast, who attacked, and what actually died or "
+            "survived. Do not infer a trade from a block unless the resulting "
+            "state proves it. Refer back to earlier turns when relevant."
         )
         response = self.agent.run(prompt, verbose=False)
         # The Agent already logged a REASONING event for the response content;
@@ -78,4 +80,42 @@ def _format_recent_actions(actions: list[dict]) -> str:
         who = a.get("player", "?")
         desc = a.get("description", "?")
         lines.append(f"  - {who}: {desc}")
+        result = _format_engine_events(a.get("engine_events") or [])
+        if result:
+            lines.append(f"    Result: {result}")
     return "\n".join(lines)
+
+
+def _format_engine_events(events: list[dict]) -> str:
+    """Summarize public rules-engine events without leaking hidden draws."""
+    noise = {
+        "PriorityChanged",
+        "PhaseChanged",
+        "StepChanged",
+        "ManaAdded",
+        "ManaSpent",
+        "DecisionRequested",
+        "DecisionSubmitted",
+    }
+    texts: list[str] = []
+    seen: set[str] = set()
+    for event in events:
+        event_type = event.get("type")
+        if event_type in noise:
+            continue
+        text = _public_event_text(event)
+        if not text or text in seen:
+            continue
+        texts.append(text)
+        seen.add(text)
+        if len(texts) >= 8:
+            break
+    return "; ".join(texts)
+
+
+def _public_event_text(event: dict) -> str:
+    event_type = event.get("type")
+    if event_type == "CardsDrawn":
+        amount = event.get("amount") or "some"
+        return f"A player drew {amount} card(s)"
+    return event.get("text") or ""

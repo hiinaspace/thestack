@@ -142,8 +142,11 @@ Several tools exist for web-based MTG goldfishing/virtual play without rules enf
 
 **Rules engine** — Argentum gym-server (`/home/s/lib/argentum-engine`) is the
 sole source of truth for legality, zones, hidden info, and the stack. We talk
-to it via plain REST (`POST /envs`, `POST /envs/{id}/step`, etc.). The Python
-harness intentionally has no rules logic of its own.
+to it via plain REST. The harness uses a local Argentum fork with
+`POST /envs/{id}/advance`, a richer step endpoint that returns the next
+observation plus compact engine events and can auto-resolve complex
+intermediate rules decisions with Argentum's default decision responder. The
+Python harness intentionally has no rules logic of its own.
 
 **Player agents** — each `PersonaAgent` holds ONE Ollama conversation that
 persists across every decision in a game. State accumulates: prior reasoning,
@@ -152,7 +155,9 @@ is no per-decision prompt rebuild. Agents commit to legal actions via the
 `submit_action` tool; the engine validates.
 
 **Commentator** — separate persistent agent, public-state only, narrates each
-turn with awareness of previous turns it has already narrated.
+turn with awareness of previous turns it has already narrated. It receives
+sanitized action/result summaries from Argentum's engine event feed rather than
+inferring everything from final board state.
 
 **Personas (Phase B)** — named identities with markdown files for cross-game
 memory (`personas/<name>/identity.md`, `memory.md`, `opponents.md`,

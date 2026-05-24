@@ -51,6 +51,24 @@ def step(env_id: str, action_id: int) -> dict:
     return r.json()
 
 
+def advance(env_id: str, action_id: int, auto_resolve_decisions: bool = True) -> dict:
+    """Advance via the richer harness endpoint.
+
+    Returns `{observation, submittedAction, events}`. The existing `step`
+    wrapper intentionally stays on `/step` for raw gym compatibility.
+    """
+    r = _SESSION.post(
+        f"{ARGENTUM_HOST}/envs/{env_id}/advance",
+        json={
+            "actionId": action_id,
+            "autoResolveDecisions": auto_resolve_decisions,
+        },
+        timeout=30,
+    )
+    r.raise_for_status()
+    return r.json()
+
+
 def dispose(env_id: str) -> None:
     _SESSION.delete(f"{ARGENTUM_HOST}/envs", json={"envIds": [env_id]})
 
