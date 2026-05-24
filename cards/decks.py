@@ -8,9 +8,8 @@ The local fork in `~/lib/argentum-engine` carries that expansion patch
 Volcanic Hammer and Lava Axe work end-to-end.
 
 Still avoided here: spells whose targeting needs a structured decision the
-gym doesn't fold (e.g. Forked Lightning's distribute-damage, Nature's Lore's
-library search) and Monstrous Growth (multi-target pump support not yet
-expanded).
+gym doesn't fold (e.g. Forked Lightning's distribute-damage and Nature's
+Lore's library search).
 """
 
 from __future__ import annotations
@@ -40,7 +39,7 @@ DECKS: dict[str, dict[str, int]] = {
         "Charging Rhino": 4,  # 4/4 unblockable-by-more-than-one for {3}{G}{G}
         "Spined Wurm": 4,  # 5/4 for {4}{G}
         "Summer Bloom": 4,  # play up to 3 extra lands this turn for {1}{G}
-        "Natural Spring": 4,  # gain 8 life for {2}{G}{G}
+        "Monstrous Growth": 4,  # target creature gets +4/+4 for {1}{G}
     },
 }
 

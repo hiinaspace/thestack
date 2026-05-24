@@ -21,6 +21,7 @@ class RandomAgent:
         self.event_log = event_log
         self._rng = random.Random(seed)
         self.toolbox = _StubToolbox()
+        self.last_reasoning = "[random]"
 
     def choose_action(self, obs: dict, verbose: bool = False) -> int:
         legal = [a for a in obs.get("legalActions", []) if a.get("affordable", True)]
@@ -50,6 +51,22 @@ class RandomAgent:
             },
         )
         return chosen["actionId"]
+
+    def choose_decision(self, obs: dict, verbose: bool = False) -> dict:
+        from llm.player import _default_decision_response
+
+        response = _default_decision_response(obs)
+        self.event_log.append(
+            ACTION,
+            {
+                "player": self.name,
+                "action_id": None,
+                "description": "structured decision",
+                "reasoning": "[random/default]",
+                "decision_response": response,
+            },
+        )
+        return response
 
 
 class _StubToolbox:

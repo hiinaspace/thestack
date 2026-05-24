@@ -21,9 +21,11 @@ class Toolbox:
     scratchpad: list[str] = field(default_factory=list)
     # Per-turn: set when the model calls submit_action
     chosen_action_id: int | None = None
+    chosen_decision_response: dict[str, Any] | None = None
     chosen_reasoning: str = ""
     # Provided fresh each turn by PlayerAgent.choose_action
     _valid_action_ids: set[int] = field(default_factory=set)
+    _valid_decision_id: str | None = None
 
     # ------------------------------------------------------------------ tools
 
@@ -48,12 +50,34 @@ class Toolbox:
         self.chosen_reasoning = reasoning.strip()
         return "Action recorded."
 
+    def submit_decision(self, response: dict[str, Any], reasoning: str) -> str:
+        if not isinstance(response, dict):
+            return "ERROR: response must be a JSON object."
+        if "type" not in response:
+            return "ERROR: response.type is required, e.g. TargetsResponse."
+        if "decisionId" not in response:
+            return "ERROR: response.decisionId is required."
+        if self._valid_decision_id and response.get("decisionId") != self._valid_decision_id:
+            return (
+                "ERROR: decisionId mismatch; expected "
+                f"{self._valid_decision_id}, got {response.get('decisionId')}."
+            )
+        self.chosen_decision_response = response
+        self.chosen_reasoning = reasoning.strip()
+        return "Decision response recorded."
+
     # ----------------------------------------------------------------- runtime
 
-    def reset_turn(self, valid_action_ids: set[int]) -> None:
+    def reset_turn(
+        self,
+        valid_action_ids: set[int],
+        valid_decision_id: str | None = None,
+    ) -> None:
         self.chosen_action_id = None
+        self.chosen_decision_response = None
         self.chosen_reasoning = ""
         self._valid_action_ids = valid_action_ids
+        self._valid_decision_id = valid_decision_id
 
     def dispatch(self, name: str, args: dict[str, Any]) -> str:
         fn = _DISPATCH.get(name)
@@ -71,6 +95,7 @@ _DISPATCH: dict[str, Callable[..., str]] = {
     "take_note": lambda tb, note: tb.take_note(note),
     "recall_strategy": lambda tb: tb.recall_strategy(),
     "submit_action": lambda tb, action_id, reasoning: tb.submit_action(action_id, reasoning),
+    "submit_decision": lambda tb, response, reasoning: tb.submit_decision(response, reasoning),
 }
 
 
@@ -130,6 +155,39 @@ TOOL_SCHEMAS: list[dict] = [
                     },
                 },
                 "required": ["action_id", "reasoning"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "submit_decision",
+            "description": (
+                "Commit a structured Argentum DecisionResponse for a pending "
+                "decision that is not represented by a numbered action. MUST "
+                "be called exactly once when the prompt asks for a structured "
+                "decision response."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "response": {
+                        "type": "object",
+                        "description": (
+                            "The DecisionResponse JSON object. Include type, "
+                            "decisionId, and the fields required for that "
+                            "response type."
+                        ),
+                    },
+                    "reasoning": {
+                        "type": "string",
+                        "description": (
+                            "One or two sentences of natural-language reasoning, "
+                            "spoken in-character for the spectator transcript."
+                        ),
+                    },
+                },
+                "required": ["response", "reasoning"],
             },
         },
     },

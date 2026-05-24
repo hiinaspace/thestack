@@ -105,6 +105,7 @@ def run_game(
         persona_b.name,
         deck_b,
         reveal_all=True,
+        skip_mulligans=False,
     )
     event_log.append(OBSERVATION, {"obs": obs})
 
@@ -119,6 +120,8 @@ def run_game(
     winner_name: str | None = None
     # Actions taken this turn — drained when the commentator runs.
     turn_actions: list[dict] = []
+    # Bounded public feed injected into each player's next decision prompt.
+    public_action_history: list[dict] = []
 
     try:
         while step_count < max_steps:
@@ -159,12 +162,70 @@ def run_game(
                 break
 
             legal_actions = obs.get("legalActions", [])
+            pending_decision = obs.get("pendingDecision") or {}
+            if not legal_actions and pending_decision.get("requiresStructuredResponse"):
+                if verbose:
+                    print(
+                        f"\n  [{acting_name}] {phase}/{step_name} — "
+                        f"structured {pending_decision.get('kind', 'decision')}"
+                    )
+                if not hasattr(agent, "choose_decision"):
+                    stop_reason = "structured_decision_without_agent_support"
+                    break
+                if isinstance(agent, PlayerAgent):
+                    decision_response = agent.choose_decision(
+                        obs,
+                        verbose=verbose,
+                        recent_public_actions=public_action_history,
+                    )
+                else:
+                    decision_response = agent.choose_decision(obs, verbose=verbose)
+                action_record = {
+                    "player": acting_name,
+                    "action_id": None,
+                    "description": (
+                        f"{pending_decision.get('kind', 'DECISION')}: "
+                        f"{pending_decision.get('prompt', '')}"
+                    ),
+                    "reasoning": getattr(agent, "last_reasoning", ""),
+                    "decision_response": decision_response,
+                    "turn_number": obs.get("turnNumber"),
+                    "phase_step": f"{phase}/{step_name}",
+                }
+                try:
+                    player_names_by_id = {p["id"]: p["name"] for p in obs.get("players", [])}
+                    advance = argentum.submit_decision(
+                        env_id,
+                        decision_response,
+                        auto_resolve_decisions=True,
+                    )
+                    obs = advance["observation"]
+                    engine_events = advance.get("events") or []
+                    action_record["player_names_by_id"] = player_names_by_id
+                    if engine_events:
+                        action_record["engine_events"] = engine_events
+                        event_log.append(
+                            ENGINE_EVENT,
+                            {
+                                "action_id": None,
+                                "player": acting_name,
+                                "events": engine_events,
+                            },
+                        )
+                    turn_actions.append(action_record)
+                    public_action_history.append(action_record)
+                    public_action_history = public_action_history[-48:]
+                except Exception as e:
+                    stop_reason = f"argentum_error: {e}"
+                    break
+
+                event_log.append(OBSERVATION, {"obs": obs})
+                step_count += 1
+                continue
+
             if not legal_actions:
-                # Either a structured decision (Argentum's gym intentionally
-                # strips option IDs for ChooseTargets/Distribute/etc., so we
-                # can't form a response without patching upstream), or a true
-                # dead end. Either way: stop cleanly so the reflector still
-                # runs for whatever we did get done.
+                # True dead end or unsupported decision shape. Stop cleanly so
+                # the reflector still runs for whatever we did get done.
                 pd = obs.get("pendingDecision") or {}
                 stop_reason = (
                     f"structured_decision: {pd.get('kind', '?')} ({pd.get('sourceName', '?')})"
@@ -187,6 +248,8 @@ def run_game(
                     "action_id": action_id,
                     "description": chosen.get("description") if chosen else None,
                     "reasoning": f"[autopass] {reason}",
+                    "turn_number": obs.get("turnNumber"),
+                    "phase_step": f"{phase}/{step_name}",
                 }
                 # Still log a thin ACTION event so the timeline reads cleanly.
                 event_log.append(ACTION, action_record)
@@ -195,21 +258,33 @@ def run_game(
             else:
                 if verbose:
                     print(f"\n  [{acting_name}] {phase}/{step_name} — {len(legal_actions)} actions")
-                action_id = agent.choose_action(obs, verbose=verbose)
+                if isinstance(agent, PlayerAgent):
+                    action_id = agent.choose_action(
+                        obs,
+                        verbose=verbose,
+                        recent_public_actions=public_action_history,
+                    )
+                else:
+                    action_id = agent.choose_action(obs, verbose=verbose)
                 chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
                 action_record = {
                     "player": acting_name,
                     "action_id": action_id,
                     "description": chosen.get("description") if chosen else str(action_id),
+                    "reasoning": getattr(agent, "last_reasoning", ""),
+                    "turn_number": obs.get("turnNumber"),
+                    "phase_step": f"{phase}/{step_name}",
                 }
                 if verbose:
                     desc = chosen["description"] if chosen else str(action_id)
                     print(f"  [{acting_name}] -> {desc}")
 
             try:
+                player_names_by_id = {p["id"]: p["name"] for p in obs.get("players", [])}
                 advance = argentum.advance(env_id, action_id, auto_resolve_decisions=True)
                 obs = advance["observation"]
                 engine_events = advance.get("events") or []
+                action_record["player_names_by_id"] = player_names_by_id
                 if engine_events:
                     action_record["engine_events"] = engine_events
                     event_log.append(
@@ -217,6 +292,8 @@ def run_game(
                         {"action_id": action_id, "player": acting_name, "events": engine_events},
                     )
                 turn_actions.append(action_record)
+                public_action_history.append(action_record)
+                public_action_history = public_action_history[-48:]
             except Exception as e:
                 stop_reason = f"argentum_error: {e}"
                 break
@@ -236,6 +313,14 @@ def run_game(
             winner_name = next((p["name"] for p in obs["players"] if p["id"] == winner_id), None)
             print(f"GAME OVER — Winner: {winner_name or 'draw'}")
             event_log.append(GAME_OVER, {"winner": winner_name, "reason": "normal"})
+            if commentator is not None:
+                commentator.comment_on_game_over(
+                    obs,
+                    winner_name=winner_name,
+                    turn=current_turn,
+                    recent_actions=turn_actions,
+                    verbose=verbose,
+                )
         else:
             print(f"Game stopped after {step_count} steps ({stop_reason})")
             event_log.append(GAME_OVER, {"winner": None, "reason": stop_reason})
@@ -260,6 +345,8 @@ def run_game(
                     won=won,
                     turn_count=current_turn,
                     scratchpad=list(agent.toolbox.scratchpad),
+                    final_obs=obs,
+                    recent_public_actions=public_action_history,
                     client=client,
                     event_log=event_log,
                     model=model,

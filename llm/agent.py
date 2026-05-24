@@ -22,8 +22,11 @@ class AgentResponse:
     # Set if the model invoked submit_action; None if the tool loop ran out or
     # the model never called it.
     action_id: int | None
+    # Set if the model invoked submit_decision for a structured gym decision.
+    decision_response: dict | None
     # Per-turn natural-language reasoning, captured via submit_action's
-    # `reasoning` argument when available; falls back to message content.
+    # or submit_decision's `reasoning` argument when available; falls back to
+    # message content.
     reasoning: str
 
 
@@ -78,7 +81,13 @@ class Agent:
             except Exception as e:
                 err = f"[LLM error: {e}]"
                 self.event_log.append(REASONING, {"player": self.name, "text": err})
-                return AgentResponse(content=err, thinking=None, action_id=None, reasoning=err)
+                return AgentResponse(
+                    content=err,
+                    thinking=None,
+                    action_id=None,
+                    decision_response=None,
+                    reasoning=err,
+                )
 
             msg = response.message
             last_content = msg.content or ""
@@ -95,10 +104,14 @@ class Agent:
                 self._execute_tool_call(tc, verbose=verbose)
 
             # If the toolbox recorded an action, we're done.
-            if self.toolbox is not None and self.toolbox.chosen_action_id is not None:
+            if self.toolbox is not None and (
+                self.toolbox.chosen_action_id is not None
+                or self.toolbox.chosen_decision_response is not None
+            ):
                 break
 
         action_id = self.toolbox.chosen_action_id if self.toolbox else None
+        decision_response = self.toolbox.chosen_decision_response if self.toolbox else None
         reasoning = (
             self.toolbox.chosen_reasoning
             if (self.toolbox and self.toolbox.chosen_reasoning)
@@ -108,6 +121,7 @@ class Agent:
             content=last_content,
             thinking=last_thinking,
             action_id=action_id,
+            decision_response=decision_response,
             reasoning=reasoning,
         )
 

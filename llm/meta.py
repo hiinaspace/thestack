@@ -14,7 +14,9 @@ import ollama
 from game.events import INFO, EventLog
 from llm import oracle
 from llm.client import DEFAULT_MODEL
+from llm.commentator import _format_engine_events
 from llm.persona import Persona
+from llm.prompts import format_public_state_for_commentator
 
 # ---------------------------------------------------------------- Strategist
 
@@ -78,6 +80,8 @@ def reflect_after_game(
     won: bool | None,
     turn_count: int,
     scratchpad: list[str],
+    final_obs: dict | None = None,
+    recent_public_actions: list[dict] | None = None,
     client: ollama.Client,
     event_log: EventLog,
     model: str = DEFAULT_MODEL,
@@ -86,6 +90,10 @@ def reflect_after_game(
     """Run the post-game reflection and write back to memory.md + opponents.md."""
     outcome = "won" if won else ("lost" if won is False else "drew")
     pad = "\n".join(f"- {n}" for n in scratchpad) if scratchpad else "(no in-game notes)"
+    final_state = (
+        format_public_state_for_commentator(final_obs) if final_obs else "(final state unavailable)"
+    )
+    action_history = _format_reflection_actions(recent_public_actions or [])
 
     system = (
         f"You are {persona.name}, reflecting on a Magic: The Gathering game you "
@@ -94,9 +102,18 @@ def reflect_after_game(
     user = (
         f"You just {outcome} against {opponent_name} after {turn_count} turns.\n\n"
         f"## Your in-game scratchpad\n{pad}\n\n"
+        f"## Authoritative final public state\n{final_state}\n\n"
+        f"## Authoritative recent public actions\n{action_history}\n\n"
         f"## Your prior memory of {opponent_name}\n"
         f"{persona.opponent_entry(opponent_name) or '(none yet)'}\n\n"
-        "Reply in two markdown sections, in this exact format:\n\n"
+        "Use only the authoritative state/actions and your scratchpad for "
+        "concrete claims about this game. Do not invent cards, counterspells, "
+        "hidden plays, or choices not shown above; if a detail is unclear, "
+        "keep it general.\n\n"
+        "Reply in three markdown sections, in this exact format:\n\n"
+        "## TABLE TALK\n"
+        "<1–3 first-person sentences spoken immediately after the game. Be "
+        "entertaining, but anchor it in concrete cards or turns.>\n\n"
         "## MEMORY ENTRY\n"
         "<2–3 paragraphs reflecting on the game. Start with a heading like "
         f"`### Game vs {opponent_name} ({outcome}, T{turn_count})`. "
@@ -114,7 +131,7 @@ def reflect_after_game(
         options={"temperature": 0.7},
     )
     text = (response.message.content or "").strip()
-    memory_block, opponent_block = _split_reflection(text, opponent_name)
+    table_talk, memory_block, opponent_block = _split_reflection(text, opponent_name)
 
     if memory_block:
         persona.append_memory(memory_block)
@@ -128,8 +145,11 @@ def reflect_after_game(
             "player": persona.name,
             "opponent": opponent_name,
             "outcome": outcome,
+            "text": table_talk,
             "memory_added": bool(memory_block),
             "opponent_updated": bool(opponent_block),
+            "memory_entry": memory_block,
+            "opponent_note": opponent_block,
             "raw": text,
         },
     )
@@ -137,13 +157,48 @@ def reflect_after_game(
         print(f"  [{persona.name} reflected on {opponent_name} — outcome: {outcome}]")
 
 
-def _split_reflection(text: str, opponent_name: str) -> tuple[str, str]:
-    """Pull the MEMORY ENTRY and OPPONENT NOTE blocks out of a reflector reply."""
+def _format_reflection_actions(actions: list[dict], max_lines: int = 36) -> str:
+    """Compact public action history for grounding post-game memory writes."""
+    lines = []
+    for action in actions:
+        who = action.get("player", "?")
+        desc = action.get("description") or "?"
+        phase = action.get("phase_step") or "?"
+        turn = action.get("turn_number") or "?"
+        result = _format_engine_events(
+            action.get("engine_events") or [],
+            action.get("player_names_by_id") or {},
+        )
+        is_pass = (action.get("reasoning") or "").startswith(
+            "[autopass]"
+        ) or desc == "Pass priority"
+        if is_pass and not result:
+            continue
+        prefix = f"T{turn} {phase} - {who}"
+        if is_pass:
+            lines.append(f"- {prefix}: result after priority passed: {result}")
+            continue
+        line = f"- {prefix}: {desc}"
+        if result:
+            line += f" | Result: {result}"
+        lines.append(line)
+    return "\n".join(lines[-max_lines:]) if lines else "(no notable public actions captured)"
+
+
+def _split_reflection(text: str, opponent_name: str) -> tuple[str, str, str]:
+    """Pull the TABLE TALK, MEMORY ENTRY, and OPPONENT NOTE blocks out."""
+    talk_re = re.compile(r"^##\s*TABLE TALK\s*$", re.MULTILINE)
     mem_re = re.compile(r"^##\s*MEMORY ENTRY\s*$", re.MULTILINE)
     opp_re = re.compile(rf"^##\s*OPPONENT NOTE:\s*{re.escape(opponent_name)}\s*$", re.MULTILINE)
 
+    talk_match = talk_re.search(text)
     mem_match = mem_re.search(text)
     opp_match = opp_re.search(text)
+
+    table_talk = ""
+    if talk_match:
+        talk_end = min([m.start() for m in (mem_match, opp_match) if m is not None] or [len(text)])
+        table_talk = text[talk_match.end() : talk_end].strip()
 
     memory_block = ""
     if mem_match:
@@ -154,8 +209,13 @@ def _split_reflection(text: str, opponent_name: str) -> tuple[str, str]:
     if opp_match:
         opponent_block = text[opp_match.end() :].strip()
 
-    # Fallback: if neither header was found, treat the whole reply as memory.
+    # Fallback: if no durable-memory headers were found, treat the whole reply
+    # as both visible table talk and memory so the reflection is not lost.
     if not mem_match and not opp_match:
+        table_talk = text.strip()
         memory_block = text.strip()
 
-    return memory_block, opponent_block
+    if not table_talk and memory_block:
+        table_talk = memory_block.split("\n\n", 1)[0].strip()
+
+    return table_talk, memory_block, opponent_block

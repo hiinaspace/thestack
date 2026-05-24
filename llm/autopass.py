@@ -22,6 +22,17 @@ def autopass_action_id(obs: dict) -> tuple[int, str] | None:
     if not legal:
         return None  # decision pending, different code path
 
+    if len(legal) == 1:
+        only = legal[0]
+        desc = only.get("description", "").lower()
+        if (
+            desc.startswith("skip combat")
+            or desc.startswith("skip blocks")
+            or desc == "no blocks"
+            or desc.startswith("no blocks ")
+        ):
+            return only["actionId"], "only non-choice combat action is legal"
+
     pass_action = next(
         (a for a in legal if "pass" in a.get("description", "").lower()),
         None,

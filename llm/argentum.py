@@ -17,6 +17,7 @@ def create_env(
     deck_b: dict[str, int],
     perspective_index: int = 0,
     reveal_all: bool = True,
+    skip_mulligans: bool = False,
 ) -> tuple[str, dict]:
     """Create a new game env. Returns (env_id, opening_observation)."""
     payload = {
@@ -24,7 +25,7 @@ def create_env(
             {"name": player_a, "deck": {"type": "Explicit", "cards": deck_a}},
             {"name": player_b, "deck": {"type": "Explicit", "cards": deck_b}},
         ],
-        "skipMulligans": True,
+        "skipMulligans": skip_mulligans,
         "perspectivePlayerIndex": perspective_index,
         "revealAll": reveal_all,
     }
@@ -61,6 +62,24 @@ def advance(env_id: str, action_id: int, auto_resolve_decisions: bool = True) ->
         f"{ARGENTUM_HOST}/envs/{env_id}/advance",
         json={
             "actionId": action_id,
+            "autoResolveDecisions": auto_resolve_decisions,
+        },
+        timeout=30,
+    )
+    r.raise_for_status()
+    return r.json()
+
+
+def submit_decision(
+    env_id: str,
+    response: dict,
+    auto_resolve_decisions: bool = True,
+) -> dict:
+    """Submit a structured DecisionResponse through the rich harness endpoint."""
+    r = _SESSION.post(
+        f"{ARGENTUM_HOST}/envs/{env_id}/decision/advance",
+        json={
+            "response": response,
             "autoResolveDecisions": auto_resolve_decisions,
         },
         timeout=30,
