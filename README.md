@@ -28,7 +28,7 @@ Pretty much basic prompt engineering, with the rough style pulled from the
 current mid-2026 era "agent" frameworks. No RAG or anything fancy, just tool
 calls into the game engine, oracle text, and some basic MTG tips.
 
-There's also some slopumentation in [CHARTER.md](charter.md) on the general posture of this.
+There's also some slopumentation in [CHARTER.md](CHARTER.md) on the general posture of this.
 
 ## uh so can I use it
 

@@ -80,7 +80,7 @@ $tabBody.addEventListener("scroll", hideThoughtTooltip);
   // Fetch the oracle lookup once — used by board.js to enrich tooltips when
   // the obs's own oracleText is empty (most non-land cards).
   try {
-    const oracle = await fetch("/api/oracle").then((r) => r.json());
+    const oracle = await fetchOracleData();
     mergeCardNames(Object.keys(oracle));
     Object.assign(state.oracle, oracle);
     for (const [name, card] of Object.entries(oracle)) {
@@ -88,9 +88,9 @@ $tabBody.addEventListener("scroll", hideThoughtTooltip);
     }
   } catch (_e) { /* viewer still works without it */ }
 
-  const list = await fetch("/api/games").then((r) => r.json());
+  const list = await fetchGameList();
   if (list.length === 0) {
-    $summary.textContent = "no games found in games/";
+    $summary.textContent = "no games found";
     return;
   }
   for (const g of list) {
@@ -115,8 +115,8 @@ $tabBody.addEventListener("scroll", hideThoughtTooltip);
 async function loadGame(gameId) {
   state.gameId = gameId;
   const [gd, pd] = await Promise.all([
-    fetch(`/api/games/${gameId}`).then((r) => r.json()),
-    fetch(`/api/games/${gameId}/personas`).then((r) => (r.ok ? r.json() : {})),
+    fetchGameData(gameId),
+    fetchGamePersonas(gameId),
   ]);
   state.events = gd.events;
   state.observations = [];
@@ -146,6 +146,83 @@ async function loadGame(gameId) {
   $summary.textContent =
     `${state.events.length} events · ${state.observations.length} board states` +
     ` · scrubbing ${state.scrubObservations.length}`;
+}
+
+async function fetchOracleData() {
+  return fetchJsonCandidates(["data/oracle.json", "/api/oracle"]);
+}
+
+async function fetchGameList() {
+  return fetchJsonCandidates(["data/games.json", "/api/games"]);
+}
+
+async function fetchGameData(gameId) {
+  const safeGameId = encodeURIComponent(gameId);
+  try {
+    const text = await fetchTextCandidates([`data/games/${safeGameId}/game.jsonl`]);
+    return { game_id: gameId, events: parseJsonLines(text) };
+  } catch (_textError) {
+    try {
+      return await fetchJsonCandidates([`data/games/${safeGameId}/game.json`]);
+    } catch (_jsonError) {
+      return fetchJsonCandidates([`/api/games/${safeGameId}`]);
+    }
+  }
+}
+
+async function fetchGamePersonas(gameId) {
+  const safeGameId = encodeURIComponent(gameId);
+  try {
+    return await fetchJsonCandidates([
+      `data/games/${safeGameId}/personas.json`,
+      `/api/games/${safeGameId}/personas`,
+    ]);
+  } catch (_e) {
+    return {};
+  }
+}
+
+async function fetchJsonCandidates(urls) {
+  const errors = [];
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) {
+        errors.push(`${url}: ${r.status}`);
+        continue;
+      }
+      return await r.json();
+    } catch (e) {
+      errors.push(`${url}: ${e.message || e}`);
+    }
+  }
+  throw new Error(`unable to load JSON (${errors.join("; ")})`);
+}
+
+async function fetchTextCandidates(urls) {
+  const errors = [];
+  for (const url of urls) {
+    try {
+      const r = await fetch(url);
+      if (!r.ok) {
+        errors.push(`${url}: ${r.status}`);
+        continue;
+      }
+      return await r.text();
+    } catch (e) {
+      errors.push(`${url}: ${e.message || e}`);
+    }
+  }
+  throw new Error(`unable to load text (${errors.join("; ")})`);
+}
+
+function parseJsonLines(text) {
+  const events = [];
+  for (const line of String(text || "").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed) events.push(JSON.parse(trimmed));
+  }
+  return events;
 }
 
 /**
