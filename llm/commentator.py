@@ -47,8 +47,10 @@ class CommentatorAgent:
             "Give 1-4 sentences of commentary on what just happened this turn. "
             "Use one terse sentence if nothing much changed. Narrate concrete "
             "actions — what was cast, who attacked, and what actually died or "
-            "survived. Do not infer a trade from a block unless the resulting "
-            "state proves it. Refer back to earlier turns when relevant."
+            "survived. Treat each Result line as authoritative: never say a "
+            "creature survived if the Result says it was destroyed. Do not "
+            "infer a trade from a block unless the resulting state proves it. "
+            "Refer back to earlier turns when relevant."
         )
         response = self.agent.run(prompt, verbose=False)
         # The Agent already logged a REASONING event for the response content;
@@ -97,20 +99,43 @@ def _format_engine_events(events: list[dict]) -> str:
         "DecisionRequested",
         "DecisionSubmitted",
     }
-    texts: list[str] = []
-    seen: set[str] = set()
+    buckets: dict[str, list[str]] = {
+        "Verified deaths": [],
+        "Verified life changes": [],
+        "Combat": [],
+        "Board": [],
+        "Game": [],
+    }
     for event in events:
         event_type = event.get("type")
         if event_type in noise:
             continue
         text = _public_event_text(event)
-        if not text or text in seen:
+        if not text:
             continue
-        texts.append(text)
-        seen.add(text)
-        if len(texts) >= 8:
-            break
-    return "; ".join(texts)
+        if event_type == "CreatureDestroyed":
+            _append_unique(buckets["Verified deaths"], text)
+        elif event_type == "LifeChanged":
+            _append_unique(buckets["Verified life changes"], text)
+        elif event_type in {"GameEnded", "PlayerLost"}:
+            _append_unique(buckets["Game"], text)
+        elif event_type in {"AttackersDeclared", "BlockersDeclared", "DamageDealt"}:
+            _append_unique(buckets["Combat"], text)
+        elif event_type in {"SpellCast", "Resolved", "ZoneChange", "Tapped", "Untapped"}:
+            _append_unique(buckets["Board"], text)
+        else:
+            _append_unique(buckets["Board"], text)
+
+    parts = []
+    for label, texts in buckets.items():
+        if texts:
+            parts.append(f"{label}: {'; '.join(texts[:5])}")
+    return " | ".join(parts)
+
+
+def _append_unique(items: list[str], text: str) -> None:
+    if text not in items:
+        items.append(text)
 
 
 def _public_event_text(event: dict) -> str:

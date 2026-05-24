@@ -194,7 +194,7 @@ main {
 .cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin-top: 4px;
 }
 
@@ -206,11 +206,61 @@ main {
   font-size: 12px;
   cursor: help;
   position: relative;
+  transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.card.has-art {
+  width: 78px;
+  min-height: 109px;
+  padding: 0;
+  border-radius: 6px;
+  background: #080910;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.card.has-art:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+
+.card-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 0.714;
+  object-fit: cover;
+  border-radius: 5px;
+}
+
+.card.has-art .card-name {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(6, 7, 12, 0.78);
+  color: #f8fafc;
+  font-size: 10px;
+  line-height: 1.15;
+  text-shadow: 0 1px 2px #000;
+  white-space: normal;
+}
+
+.card.has-art .pt {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: rgba(6, 7, 12, 0.82);
+  color: var(--accent);
+  font-size: 10px;
 }
 
 .card.tapped {
   opacity: 0.55;
-  transform: rotate(2deg);
+  transform: rotate(2deg) translateY(2px);
 }
 
 .card.sick {
@@ -225,22 +275,29 @@ main {
 .card-tooltip {
   display: none;
   position: absolute;
-  z-index: 10;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
+  z-index: 50;
+  top: 0;
+  left: calc(100% + 10px);
   background: var(--bg);
   border: 1px solid var(--accent);
-  border-radius: 4px;
-  padding: 6px 8px;
-  width: 280px;
+  border-radius: 10px;
+  padding: 8px;
+  width: 310px;
   font-size: 12px;
   color: var(--text);
   white-space: normal;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
 }
 
 .card:hover .card-tooltip {
   display: block;
+}
+
+.card-tooltip-image {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
 
 .card-tooltip-head {

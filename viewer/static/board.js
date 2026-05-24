@@ -1,9 +1,12 @@
 /* Minimal HTML board renderer for The Stack viewer.
  *
  * renderBoard(panelEl, obs) — replace panelEl's contents with a snapshot of
- * the given Argentum observation. No interactivity beyond hover tooltips
- * with oracle text.
+ * the given Argentum observation. Cards use Scryfall image fallbacks by name
+ * with oracle-text hover details.
  */
+
+const CARD_BACK_IMAGE_URL =
+  "https://backs.scryfall.io/normal/2/2/222b7a3b-2321-4d4c-af19-19338b134971.jpg?1677416389";
 
 function fmtZoneLabel(zoneType) {
   return zoneType.replace(/_/g, " ").toLowerCase();
@@ -12,10 +15,28 @@ function fmtZoneLabel(zoneType) {
 function cardEl(c) {
   const el = document.createElement("div");
   el.className = "card";
+  el.dataset.cardName = c.name || "?";
   if (c.tapped) el.classList.add("tapped");
   if (c.summoningSick) el.classList.add("sick");
 
+  const imageUrl = getCardImageUrl(c, "small");
+  if (imageUrl) {
+    el.classList.add("has-art");
+    const img = document.createElement("img");
+    img.className = "card-art";
+    img.src = imageUrl;
+    img.alt = c.name || "card";
+    img.loading = "lazy";
+    img.addEventListener("error", () => {
+      img.remove();
+      el.classList.remove("has-art");
+      el.classList.add("image-missing");
+    });
+    el.appendChild(img);
+  }
+
   const name = document.createElement("span");
+  name.className = "card-name";
   name.textContent = c.name || "?";
   el.appendChild(name);
 
@@ -41,10 +62,21 @@ function buildCardTooltip(c) {
   const cost = c.manaCost || scry?.mana_cost || "";
   const typeLine = scry?.type_line || (c.types?.length ? c.types.join(", ") : "");
   const oracle = c.oracleText || scry?.oracle_text || "";
-  if (!cost && !typeLine && !oracle && c.power == null) return null;
+  const imageUrl = getCardImageUrl(c, "normal");
+  if (!imageUrl && !cost && !typeLine && !oracle && c.power == null) return null;
 
   const tip = document.createElement("div");
   tip.className = "card-tooltip";
+  if (imageUrl) {
+    const img = document.createElement("img");
+    img.className = "card-tooltip-image";
+    img.src = imageUrl;
+    img.alt = c.name || "card";
+    img.loading = "lazy";
+    img.addEventListener("error", () => img.remove());
+    tip.appendChild(img);
+  }
+
   const header = document.createElement("div");
   header.className = "card-tooltip-head";
   let pt = "";
@@ -65,6 +97,28 @@ function buildCardTooltip(c) {
     tip.appendChild(o);
   }
   return tip;
+}
+
+function getCardImageUrl(c, version = "normal") {
+  if (c.faceDown) return CARD_BACK_IMAGE_URL;
+  const scry = lookupOracle(c);
+  const direct =
+    c.imageUri ||
+    c.image_uri ||
+    scry?.image_uri ||
+    scry?.imageUri ||
+    scry?.image_uris?.[version] ||
+    scry?.imageUris?.[version];
+  if (direct) return direct;
+  return getScryfallFallbackUrl(c.name, version);
+}
+
+function getScryfallFallbackUrl(cardName, version = "normal") {
+  if (!cardName) return "";
+  // Match Argentum's fallback: token names often have a local " Token" suffix
+  // that Scryfall's exact lookup does not use.
+  const scryfallName = cardName.endsWith(" Token") ? cardName.slice(0, -6) : cardName;
+  return `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(scryfallName)}&format=image&version=${version}`;
 }
 
 function lookupOracle(c) {
