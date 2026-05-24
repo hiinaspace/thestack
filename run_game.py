@@ -126,6 +126,10 @@ def run_game(
     turn_actions: list[dict] = []
     # Bounded public feed injected into each player's next decision prompt.
     public_action_history: list[dict] = []
+    # If an action returns the exact same state digest, force a safe "done"
+    # action on the repeat rather than paying for another identical LLM choice.
+    no_progress_positions: set[tuple[str, str]] = set()
+    interrupted = False
 
     try:
         while step_count < max_steps:
@@ -239,7 +243,10 @@ def run_game(
                 break
 
             # Skip the LLM call when there's no meaningful choice.
-            autopass = autopass_action_id(obs)
+            no_progress_guard = no_progress_fallback_action_id(
+                obs, acting_name, no_progress_positions
+            )
+            autopass = no_progress_guard or autopass_action_id(obs)
             if autopass is not None:
                 action_id, reason = autopass
                 event_log.append(
@@ -284,6 +291,7 @@ def run_game(
                     print(f"  [{acting_name}] -> {desc}")
 
             try:
+                previous_digest = obs.get("stateDigest")
                 player_names_by_id = {p["id"]: p["name"] for p in obs.get("players", [])}
                 advance = argentum.advance(env_id, action_id, auto_resolve_decisions=True)
                 obs = advance["observation"]
@@ -298,6 +306,12 @@ def run_game(
                 turn_actions.append(action_record)
                 public_action_history.append(action_record)
                 public_action_history = public_action_history[-48:]
+                if (
+                    previous_digest
+                    and obs.get("stateDigest") == previous_digest
+                    and not obs.get("terminated")
+                ):
+                    no_progress_positions.add((str(previous_digest), acting_name))
             except Exception as e:
                 stop_reason = f"argentum_error: {e}"
                 break
@@ -305,8 +319,12 @@ def run_game(
             event_log.append(OBSERVATION, {"obs": obs})
             step_count += 1
 
+    except KeyboardInterrupt:
+        interrupted = True
+        stop_reason = "interrupted"
+
     finally:
-        if commentator is not None:
+        if commentator is not None and not interrupted:
             commentator.comment_on_turn(
                 obs, current_turn, recent_actions=turn_actions, verbose=verbose
             )
@@ -359,6 +377,31 @@ def run_game(
 
         event_log.close()
         argentum.dispose(env_id)
+
+
+def no_progress_fallback_action_id(
+    obs: dict,
+    acting_name: str,
+    no_progress_positions: set[tuple[str, str]],
+) -> tuple[int, str] | None:
+    """Pick the safest declaration/pass action after a prior no-op at this state."""
+    digest = obs.get("stateDigest")
+    if not digest or (str(digest), acting_name) not in no_progress_positions:
+        return None
+
+    legal_actions = obs.get("legalActions", [])
+    preferred = (
+        "No blocks",
+        "Skip blocks",
+        "Skip combat",
+        "Pass priority",
+    )
+    for label in preferred:
+        for action in legal_actions:
+            desc = action.get("description", "")
+            if desc == label or desc.startswith(f"{label} "):
+                return action["actionId"], f"no progress after prior action; choosing {desc}"
+    return None
 
 
 def main() -> None:
