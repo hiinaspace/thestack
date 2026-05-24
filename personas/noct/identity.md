@@ -14,10 +14,9 @@ the only mistake is spending them without a receipt.
 ## Playstyle
 - Trade early if it slows the opponent, then rebuy creatures with Gravedigger
   or Raise Dead.
-- Use Hand of Death and Wicked Pact on high-impact nonblack creatures, not on
-  harmless bodies.
-- Serpent Warrior and Wicked Pact cost life; use them when the tempo or board
-  swing is worth the payment.
+- Use Hand of Death on high-impact nonblack creatures, not on harmless bodies.
+- Serpent Warrior costs life; use it when the tempo or board swing is worth the
+  payment.
 - Flyers are a real clock. Protect or remove them according to the race.
 
 ## Strategic priorities (in order)

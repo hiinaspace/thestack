@@ -30,12 +30,12 @@ DECKS: dict[str, dict[str, int]] = {
         "Feral Shadow": 4,  # 2/1 flying for {2}{B}
         "Bog Raiders": 3,  # 2/2 for {2}{B}
         "Serpent Warrior": 4,  # 3/3, lose 3 on ETB for {2}{B}
+        "Skeletal Crocodile": 2,  # 5/1 for {3}{B}
         "Gravedigger": 3,  # 2/2, return creature from graveyard for {3}{B}
         "Arrogant Vampire": 3,  # 4/3 flying for {3}{B}{B}
         "Hand of Death": 4,  # destroy target nonblack creature for {2}{B}
         "Vampiric Touch": 3,  # drain opponent for 2 for {2}{B}
         "Mind Rot": 2,  # target player discards two for {2}{B}
-        "Wicked Pact": 2,  # destroy two nonblack creatures, lose 5 for {1}{B}{B}
     },
     "red_rush": {
         "Mountain": 24,
