@@ -29,18 +29,18 @@ html, body {
 }
 
 body {
-  display: grid;
-  grid-template-rows: auto auto 1fr;
   height: 100vh;
+  overflow: hidden;
 }
 
 #topbar {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px 6px;
+  background: transparent;
+  border-bottom: none;
+  flex-wrap: wrap;
 }
 
 #title {
@@ -56,21 +56,25 @@ body {
   padding: 4px 8px;
   border-radius: 4px;
   font: inherit;
-  min-width: 280px;
+  min-width: 0;
+  flex: 1 1 250px;
+  max-width: 100%;
 }
 
 #game-summary {
   color: var(--muted);
   font-size: 12px;
+  flex-basis: 100%;
 }
 
 #scrubber-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
+  gap: 8px;
+  padding: 6px 12px 10px;
+  background: transparent;
+  border-bottom: none;
+  flex-wrap: wrap;
 }
 
 #scrubber {
@@ -81,14 +85,14 @@ body {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  flex: 0 0 8ch;
+  flex: 0 0 7ch;
   text-align: right;
 }
 
 #state-label {
   color: var(--accent);
   white-space: nowrap;
-  flex: 0 0 330px;
+  flex: 1 1 240px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -116,20 +120,27 @@ body {
 
 main {
   display: grid;
-  grid-template-columns: 1fr 480px;
+  grid-template-columns: minmax(0, 1fr) 500px;
   overflow: hidden;
+  height: 100vh;
 }
 
 #board-panel {
-  padding: 16px;
+  padding: 10px;
   overflow-y: auto;
   border-right: 1px solid var(--border);
+  min-height: 100vh;
 }
 
 #side-panel {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   overflow: hidden;
+}
+
+#control-panel {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
 }
 
 #tabs {
@@ -157,13 +168,13 @@ main {
 
 #tab-body {
   overflow-y: auto;
-  padding: 12px 16px;
+  padding: 10px 12px;
 }
 
 /* Board */
 .player-board {
-  margin-bottom: 16px;
-  padding: 10px;
+  margin-bottom: 10px;
+  padding: 8px;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -180,8 +191,26 @@ main {
   font-size: 14px;
 }
 
+.player-zones-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 142px;
+  gap: 8px;
+  align-items: start;
+}
+
+.player-main-zones {
+  min-width: 0;
+}
+
+.player-side-zones {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
 .zone {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .zone-label {
@@ -194,8 +223,37 @@ main {
 .cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.battlefield-zone {
+  margin-top: 0;
+  padding: 6px;
+  border: 1px solid rgba(245, 158, 11, 0.14);
+  border-radius: 6px;
+  background: rgba(8, 9, 16, 0.2);
+}
+
+.battlefield-row {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 6px;
+  align-items: start;
+  padding: 4px 0;
+  border-top: 1px dashed rgba(139, 143, 168, 0.18);
+}
+
+.zone-label + .battlefield-row {
+  border-top: none;
+}
+
+.battlefield-row-label {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding-top: 4px;
 }
 
 .card {
@@ -203,15 +261,15 @@ main {
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: help;
   position: relative;
   transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .card.has-art {
-  width: 78px;
-  min-height: 109px;
+  width: 60px;
+  min-height: 84px;
   padding: 0;
   border-radius: 6px;
   background: #080910;
@@ -241,7 +299,7 @@ main {
   border-radius: 4px;
   background: rgba(6, 7, 12, 0.78);
   color: #f8fafc;
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1.15;
   text-shadow: 0 1px 2px #000;
   white-space: normal;
@@ -255,7 +313,7 @@ main {
   border-radius: 999px;
   background: rgba(6, 7, 12, 0.82);
   color: var(--accent);
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .card.tapped {
@@ -272,30 +330,84 @@ main {
   font-weight: 600;
 }
 
+.side-zone {
+  margin-top: 0;
+  padding: 6px;
+  border: 1px solid rgba(139, 143, 168, 0.18);
+  border-radius: 6px;
+  background: rgba(8, 9, 16, 0.16);
+}
+
+.side-zone-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  max-height: 126px;
+  overflow-y: auto;
+  font-size: 11px;
+}
+
+.player-summary {
+  padding: 8px;
+  border: 1px solid rgba(245, 158, 11, 0.24);
+  border-radius: 6px;
+  background: rgba(8, 9, 16, 0.28);
+}
+
+.player-summary-name {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.player-summary-life {
+  color: var(--accent);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.player-summary-meta {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.card-text-token {
+  color: #fbbf24;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
 .card-tooltip {
   display: none;
-  position: absolute;
-  z-index: 50;
-  top: 0;
-  left: calc(100% + 10px);
+  position: fixed;
+  z-index: 5000;
   background: var(--bg);
   border: 1px solid var(--accent);
   border-radius: 10px;
   padding: 8px;
   width: 310px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
   font-size: 12px;
   color: var(--text);
   white-space: normal;
+  pointer-events: none;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
 }
 
-.card:hover .card-tooltip {
+.card-tooltip.visible {
   display: block;
 }
 
 .card-tooltip-image {
   display: block;
   width: 100%;
+  aspect-ratio: 0.714;
+  object-fit: cover;
   border-radius: 8px;
   margin-bottom: 8px;
 }
@@ -357,6 +469,119 @@ main {
 .event.commentary .event-head { color: var(--commentary); }
 .event.commentary .event-body { color: var(--commentary); }
 .event.info .event-head { color: var(--info); }
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 10px;
+  background: rgba(21, 23, 35, 0.72);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--timeline-player-color, var(--border));
+  border-radius: 8px;
+  opacity: 1;
+  transition: background 0.12s ease, opacity 0.12s ease, border-color 0.12s ease;
+}
+
+.timeline-head {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.timeline-action {
+  border-top-color: rgba(253, 230, 138, 0.22);
+  border-right-color: rgba(253, 230, 138, 0.22);
+  border-bottom-color: rgba(253, 230, 138, 0.22);
+}
+
+.timeline-clickable {
+  cursor: pointer;
+}
+
+.timeline-clickable:hover,
+.timeline-clickable:focus {
+  background: rgba(31, 35, 52, 0.95);
+  outline: none;
+}
+
+.timeline-item.future {
+  opacity: 0.38;
+  filter: grayscale(0.35);
+}
+
+.timeline-result {
+  margin-top: 6px;
+  color: var(--engine);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+.timeline-commentary {
+  color: var(--commentary);
+}
+
+.timeline-final-commentary {
+  border-color: rgba(134, 239, 172, 0.42);
+  border-left-color: var(--commentary);
+}
+
+.timeline-reflection {
+  color: var(--reasoning);
+}
+
+.timeline-game-over {
+  color: var(--info);
+  font-weight: 600;
+}
+
+.timeline-action-title {
+  color: var(--action);
+  font-weight: 600;
+}
+
+.timeline-reason {
+  margin-top: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.thought-trigger {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 2px 7px;
+  border: 1px solid rgba(139, 143, 168, 0.45);
+  border-radius: 999px;
+  color: var(--thinking);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: help;
+}
+
+.thought-popover {
+  display: none;
+  position: fixed;
+  z-index: 5200;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(520px, calc(100vh - 48px));
+  overflow: auto;
+  padding: 10px;
+  border: 1px solid rgba(139, 143, 168, 0.45);
+  border-radius: 8px;
+  background: #080910;
+  color: var(--thinking);
+  white-space: pre-wrap;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.45;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.7);
+}
+
+.thought-popover.visible {
+  display: block;
+}
 
 .memory-doc {
   white-space: pre-wrap;

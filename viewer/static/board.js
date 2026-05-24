@@ -8,6 +8,51 @@
 const CARD_BACK_IMAGE_URL =
   "https://backs.scryfall.io/normal/2/2/222b7a3b-2321-4d4c-af19-19338b134971.jpg?1677416389";
 
+let activeCardTooltip = null;
+let lastTooltipMouseEvent = null;
+
+function showCardTooltip(tip, event) {
+  if (activeCardTooltip && activeCardTooltip !== tip) hideActiveCardTooltip();
+  activeCardTooltip = tip;
+  lastTooltipMouseEvent = event;
+  if (!tip.isConnected) document.body.appendChild(tip);
+  tip.classList.add("visible");
+  positionCardTooltip(tip, event);
+  requestAnimationFrame(() => positionCardTooltip(tip, event));
+}
+
+function moveCardTooltip(tip, event) {
+  if (activeCardTooltip !== tip) return;
+  lastTooltipMouseEvent = event;
+  positionCardTooltip(tip, event);
+}
+
+function hideActiveCardTooltip() {
+  if (!activeCardTooltip) return;
+  activeCardTooltip.classList.remove("visible");
+  activeCardTooltip.remove();
+  activeCardTooltip = null;
+  lastTooltipMouseEvent = null;
+}
+
+function positionCardTooltip(tip, event) {
+  if (!event) return;
+  const gap = 18;
+  const pad = 12;
+  const rect = tip.getBoundingClientRect();
+  const width = rect.width || 310;
+  const height = rect.height || 440;
+  let left = event.clientX + gap;
+  if (left + width + pad > window.innerWidth) left = event.clientX - width - gap;
+  left = Math.max(pad, Math.min(left, window.innerWidth - width - pad));
+
+  let top = event.clientY - height / 2;
+  top = Math.max(pad, Math.min(top, window.innerHeight - height - pad));
+
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(top)}px`;
+}
+
 function fmtZoneLabel(zoneType) {
   return zoneType.replace(/_/g, " ").toLowerCase();
 }
@@ -47,11 +92,32 @@ function cardEl(c) {
     el.appendChild(pt);
   }
 
-  const tip = buildCardTooltip(c);
-  if (tip) el.appendChild(tip);
+  attachCardHover(el, c);
 
   return el;
 }
+
+function cardNameTokenEl(c) {
+  const el = document.createElement("span");
+  el.className = "card-text-token";
+  el.textContent = c.name || "?";
+  attachCardHover(el, c);
+  return el;
+}
+
+function attachCardHover(el, c) {
+  let tip = null;
+  el.addEventListener("mouseenter", (event) => {
+    tip = tip || buildCardTooltip(c);
+    if (tip) showCardTooltip(tip, event);
+  });
+  el.addEventListener("mousemove", (event) => {
+    if (tip) moveCardTooltip(tip, event);
+  });
+  el.addEventListener("mouseleave", hideActiveCardTooltip);
+}
+
+window.attachCardHover = attachCardHover;
 
 function buildCardTooltip(c) {
   // Prefer scryfall data (loaded into window.thestackOracle by app.js init)
@@ -74,6 +140,9 @@ function buildCardTooltip(c) {
     img.alt = c.name || "card";
     img.loading = "lazy";
     img.addEventListener("error", () => img.remove());
+    img.addEventListener("load", () => {
+      if (activeCardTooltip === tip) positionCardTooltip(tip, lastTooltipMouseEvent);
+    });
     tip.appendChild(img);
   }
 
@@ -134,6 +203,11 @@ function lookupOracle(c) {
   );
 }
 
+function hasCardType(c, type) {
+  const wanted = type.toUpperCase();
+  return (c.types || []).some((t) => String(t).toUpperCase() === wanted);
+}
+
 function zoneEl(label, cards) {
   const el = document.createElement("div");
   el.className = "zone";
@@ -155,30 +229,124 @@ function zoneEl(label, cards) {
   return el;
 }
 
-function playerBoardEl(player, zonesByOwner, isActing) {
+function battlefieldZoneEl(cards, isTopPlayer = false) {
+  const creatures = cards.filter((c) => hasCardType(c, "CREATURE"));
+  const lands = cards.filter((c) => hasCardType(c, "LAND"));
+  const other = cards.filter((c) => !hasCardType(c, "CREATURE") && !hasCardType(c, "LAND"));
+
+  const el = document.createElement("div");
+  el.className = "zone battlefield-zone";
+  const lbl = document.createElement("div");
+  lbl.className = "zone-label";
+  lbl.textContent = `battlefield (${cards.length})`;
+  el.appendChild(lbl);
+
+  if (isTopPlayer) {
+    if (other.length) el.appendChild(battlefieldRowEl("other", other, ""));
+    el.appendChild(battlefieldRowEl("lands", lands, "no lands"));
+    el.appendChild(battlefieldRowEl("creatures", creatures, "no creatures"));
+  } else {
+    el.appendChild(battlefieldRowEl("creatures", creatures, "no creatures"));
+    el.appendChild(battlefieldRowEl("lands", lands, "no lands"));
+    if (other.length) el.appendChild(battlefieldRowEl("other", other, ""));
+  }
+  return el;
+}
+
+function battlefieldRowEl(label, cards, emptyText) {
+  const row = document.createElement("div");
+  row.className = `battlefield-row battlefield-${label}`;
+
+  const lbl = document.createElement("div");
+  lbl.className = "battlefield-row-label";
+  lbl.textContent = `${label} (${cards.length})`;
+  row.appendChild(lbl);
+
+  const list = document.createElement("div");
+  list.className = "cards";
+  if (cards.length === 0 && emptyText) {
+    const empty = document.createElement("span");
+    empty.className = "empty";
+    empty.textContent = emptyText;
+    list.appendChild(empty);
+  } else {
+    for (const c of cards) list.appendChild(cardEl(c));
+  }
+  row.appendChild(list);
+  return row;
+}
+
+function playerBoardEl(player, zonesByOwner, isActing, isTopPlayer = false) {
   const wrap = document.createElement("div");
   wrap.className = "player-board" + (isActing ? " active" : "");
 
-  const h = document.createElement("h3");
-  const left = document.createElement("span");
-  left.textContent = player.name;
-  const right = document.createElement("span");
-  right.textContent = `${player.lifeTotal}♥  ·  ${player.handSize} hand  ·  ${player.librarySize} lib`;
-  h.appendChild(left);
-  h.appendChild(right);
-  wrap.appendChild(h);
-
   const zones = zonesByOwner.get(player.id) || {};
-  for (const zt of ["Battlefield", "Hand", "Graveyard", "Exile"]) {
-    const cards = zones[zt] || [];
-    if (zt === "Exile" && cards.length === 0) continue;
-    wrap.appendChild(zoneEl(fmtZoneLabel(zt), cards));
+  const layout = document.createElement("div");
+  layout.className = "player-zones-layout";
+  const main = document.createElement("div");
+  main.className = "player-main-zones";
+  const side = document.createElement("div");
+  side.className = "player-side-zones";
+
+  side.appendChild(playerSummaryEl(player));
+  side.appendChild(sideZoneEl("graveyard", zones.Graveyard || []));
+  if ((zones.Exile || []).length > 0) side.appendChild(sideZoneEl("exile", zones.Exile || []));
+  if (isTopPlayer) {
+    main.appendChild(zoneEl("hand", zones.Hand || []));
+    main.appendChild(battlefieldZoneEl(zones.Battlefield || [], true));
+  } else {
+    main.appendChild(battlefieldZoneEl(zones.Battlefield || [], false));
+    main.appendChild(zoneEl("hand", zones.Hand || []));
   }
+
+  layout.appendChild(main);
+  layout.appendChild(side);
+  wrap.appendChild(layout);
   return wrap;
+}
+
+function playerSummaryEl(player) {
+  const el = document.createElement("div");
+  el.className = "player-summary";
+  const name = document.createElement("div");
+  name.className = "player-summary-name";
+  name.textContent = player.name;
+  const life = document.createElement("div");
+  life.className = "player-summary-life";
+  life.textContent = `${player.lifeTotal}♥`;
+  const meta = document.createElement("div");
+  meta.className = "player-summary-meta";
+  meta.textContent = `${player.handSize} hand · ${player.librarySize} lib`;
+  el.appendChild(name);
+  el.appendChild(life);
+  el.appendChild(meta);
+  return el;
+}
+
+function sideZoneEl(label, cards) {
+  const el = document.createElement("div");
+  el.className = "zone side-zone";
+  const lbl = document.createElement("div");
+  lbl.className = "zone-label";
+  lbl.textContent = `${label} (${cards.length})`;
+  el.appendChild(lbl);
+  const list = document.createElement("div");
+  list.className = "side-zone-cards";
+  if (cards.length === 0) {
+    const empty = document.createElement("span");
+    empty.className = "empty";
+    empty.textContent = "—";
+    list.appendChild(empty);
+  } else {
+    for (const c of cards) list.appendChild(cardNameTokenEl(c));
+  }
+  el.appendChild(list);
+  return el;
 }
 
 // eslint-disable-next-line no-unused-vars
 function renderBoard(panel, obs) {
+  hideActiveCardTooltip();
   panel.replaceChildren();
   if (!obs) {
     panel.textContent = "No observation yet.";
@@ -192,8 +360,8 @@ function renderBoard(panel, obs) {
   }
 
   const acting = obs.agentToAct;
-  for (const p of obs.players || []) {
-    panel.appendChild(playerBoardEl(p, zonesByOwner, p.id === acting));
+  for (const [idx, p] of (obs.players || []).entries()) {
+    panel.appendChild(playerBoardEl(p, zonesByOwner, p.id === acting, idx === 0));
   }
 
   const stack = obs.stack || [];
