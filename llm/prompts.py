@@ -16,6 +16,7 @@ def build_player_system_prompt(
     opponent_name: str,
     *,
     identity: str = "",
+    decklist: str = "",
     strategy: str = "",
     opponent_notes: str = "",
     recent_memory: str = "",
@@ -31,6 +32,8 @@ def build_player_system_prompt(
     ]
     if identity:
         sections.append(f"## Your identity\n{identity}")
+    if decklist:
+        sections.append(f"## Your full decklist this game\n{decklist}")
     if strategy:
         sections.append(f"## Your strategy for THIS game (written pre-game)\n{strategy}")
     if opponent_notes:
@@ -76,6 +79,11 @@ Rules of the game:
     biggest X you can afford that still serves the plan.
   - Targeted spells: skip any action tagged [NO VALID TARGETS]. Removal hits
     the opponent's most dangerous creature; pump hits your own attacker.
+  - Beneficial targeted spells (for example "gets +N/+N", gains flying, or
+    returns a creature card from a graveyard to hand) are usually for your own
+    cards. Destructive or damage spells are usually for opposing cards.
+  - Read mass-effect text literally: "each creature" does not hit players
+    unless the text also names players.
   - Mana abilities ("{T}: Add {X}") only matter if you immediately spend that
     mana on a spell — mana left in your pool evaporates at end of step. If
     you have no spell to cast, pass priority instead of tapping a land for
@@ -481,7 +489,11 @@ def format_structured_decision(obs: dict, acting_player_name: str) -> str:
     return "\n".join(lines)
 
 
-def format_legal_actions(legal_actions: list[dict]) -> str:
+def format_legal_actions(
+    legal_actions: list[dict],
+    obs: dict | None = None,
+    acting_player_name: str | None = None,
+) -> str:
     """Format the legalActions list into a numbered menu."""
     if not legal_actions:
         return "No legal actions available."
@@ -509,6 +521,9 @@ def format_legal_actions(legal_actions: list[dict]) -> str:
             suffix += " [can't afford]"
         if len(grouped) > 1:
             suffix += f" [{len(grouped)} equivalent engine variants collapsed]"
+        target_note = _targeting_note(a, obs, acting_player_name)
+        if target_note:
+            suffix += f" [{target_note}]"
         lines.append(f"  {action_id}: {desc}{suffix}")
     return "\n".join(lines)
 
@@ -809,6 +824,8 @@ def _public_event_text(event: dict, player_names_by_id: dict[str, str]) -> str:
         source = _event_card_name(event)
         target = _damage_target_name(event, player_names_by_id)
         return f"{source} dealt {event.get('amount') or '?'} damage to {target}"
+    if event_type == "BecomesTarget":
+        return _format_becomes_target(event)
     if event_type == "Tapped":
         return f"{_event_card_name(event)} tapped"
     if event_type == "ZoneChange":
@@ -874,6 +891,22 @@ def _player_from_raw_text(text: str, player_names_by_id: dict[str, str]) -> str:
     return player_names_by_id.get(m.group(1), "") if m else ""
 
 
+def _format_becomes_target(event: dict) -> str:
+    text = event.get("text") or ""
+    target = _raw_event_field(text, "targetName")
+    source = _raw_event_field(text, "sourceName")
+    if target and source:
+        return f"{target} became target of {source}"
+    if target:
+        return f"{target} became a target"
+    return ""
+
+
+def _raw_event_field(text: str, field: str) -> str:
+    m = re.search(rf"{re.escape(field)}=([^,)]+)", text)
+    return m.group(1).strip() if m else ""
+
+
 def _append_unique(items: list[str], text: str) -> None:
     if text not in items:
         items.append(text)
@@ -933,4 +966,91 @@ def _legal_action_key(action: dict) -> tuple:
         action.get("isManaAbility", False),
         action.get("isDecisionOption", False),
         tuple(action.get("targetEntityIds") or []),
+    )
+
+
+def _targeting_note(
+    action: dict,
+    obs: dict | None,
+    acting_player_name: str | None,
+) -> str:
+    if not obs or not acting_player_name:
+        return ""
+    target_ids = action.get("targetEntityIds") or []
+    if not target_ids:
+        return ""
+
+    source_name = _source_card_from_action(action.get("description") or "")
+    if not source_name:
+        return ""
+    source_card = oracle.card(source_name)
+    if not source_card:
+        return ""
+
+    target_owners = _target_owners_by_entity(obs)
+    own_targets = [
+        entity_id for entity_id in target_ids if target_owners.get(entity_id) == acting_player_name
+    ]
+    opposing_targets = [
+        entity_id
+        for entity_id in target_ids
+        if target_owners.get(entity_id) and target_owners.get(entity_id) != acting_player_name
+    ]
+
+    oracle_text = str(source_card.get("oracle_text") or "").lower()
+    beneficial = _looks_beneficial_target_spell(oracle_text)
+    harmful = _looks_harmful_target_spell(oracle_text)
+    if beneficial and opposing_targets:
+        return "WARNING: beneficial effect targets opponent-controlled object"
+    if harmful and own_targets:
+        return "WARNING: harmful effect targets your own object"
+    return ""
+
+
+def _source_card_from_action(description: str) -> str:
+    m = re.match(r"Cast (.+?)(?: targeting\b| for\b|$)", description)
+    return m.group(1).strip() if m else ""
+
+
+def _target_owners_by_entity(obs: dict) -> dict[str, str]:
+    player_names = {p.get("id"): p.get("name") for p in obs.get("players", [])}
+    owners: dict[str, str] = {
+        player_id: name for player_id, name in player_names.items() if player_id and name
+    }
+    for zone in obs.get("zones", []):
+        zone_owner = player_names.get(zone.get("ownerId"), zone.get("ownerId"))
+        for card in zone.get("cards") or []:
+            entity_id = card.get("entityId")
+            controller_id = card.get("controllerId") or card.get("ownerId") or zone.get("ownerId")
+            controller = player_names.get(controller_id, zone_owner)
+            if entity_id and controller:
+                owners[entity_id] = controller
+    for card in obs.get("stack") or []:
+        entity_id = card.get("entityId")
+        controller = player_names.get(card.get("controllerId"), card.get("controllerId"))
+        if entity_id and controller:
+            owners[entity_id] = controller
+    return owners
+
+
+def _looks_beneficial_target_spell(oracle_text: str) -> bool:
+    if "target opponent" in oracle_text or "target player discards" in oracle_text:
+        return False
+    return bool(
+        re.search(r"gets \+[0-9x]+/\+[0-9x]+", oracle_text)
+        or "gains flying" in oracle_text
+        or "return target creature card from your graveyard to your hand" in oracle_text
+    )
+
+
+def _looks_harmful_target_spell(oracle_text: str) -> bool:
+    return any(
+        phrase in oracle_text
+        for phrase in (
+            "destroy target",
+            "deals damage to target",
+            "put target creature on top",
+            "return target creature to its owner's hand",
+            "target player discards",
+        )
     )

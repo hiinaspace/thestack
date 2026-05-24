@@ -14,6 +14,7 @@ import re
 import ollama
 
 from game.events import ACTION, EventLog
+from llm import oracle
 from llm.agent import Agent
 from llm.persona import Persona
 from llm.prompts import (
@@ -36,6 +37,7 @@ class PlayerAgent:
         model: str,
         client: ollama.Client,
         event_log: EventLog,
+        deck: dict[str, int] | None = None,
     ) -> None:
         self.persona = persona
         self.name = persona.name
@@ -51,6 +53,7 @@ class PlayerAgent:
                 persona.name,
                 opponent_name,
                 identity=persona.identity,
+                decklist=oracle.deck_listing(deck or {}),
                 strategy=persona.strategy,
                 opponent_notes=persona.opponent_entry(opponent_name),
                 recent_memory=persona.recent_memory(),
@@ -77,7 +80,7 @@ class PlayerAgent:
             f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
             f"{format_combat_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_mulligan_evaluator(obs, self.name, legal_actions)}\n\n"
-            f"{format_legal_actions(legal_actions)}\n\n"
+            f"{format_legal_actions(legal_actions, obs, self.name)}\n\n"
             "Choose one of the numbered legal actions and call submit_action."
         )
 

@@ -288,7 +288,7 @@ function playerBoardEl(player, zonesByOwner, isActing, isTopPlayer = false) {
   const side = document.createElement("div");
   side.className = "player-side-zones";
 
-  side.appendChild(playerSummaryEl(player));
+  side.appendChild(playerSummaryEl(player, zones));
   side.appendChild(sideZoneEl("graveyard", zones.Graveyard || []));
   if ((zones.Exile || []).length > 0) side.appendChild(sideZoneEl("exile", zones.Exile || []));
   if (isTopPlayer) {
@@ -305,7 +305,7 @@ function playerBoardEl(player, zonesByOwner, isActing, isTopPlayer = false) {
   return wrap;
 }
 
-function playerSummaryEl(player) {
+function playerSummaryEl(player, zones = {}) {
   const el = document.createElement("div");
   el.className = "player-summary";
   const name = document.createElement("div");
@@ -317,9 +317,18 @@ function playerSummaryEl(player) {
   const meta = document.createElement("div");
   meta.className = "player-summary-meta";
   meta.textContent = `${player.handSize} hand · ${player.librarySize} lib`;
+  const deckButton = document.createElement("button");
+  deckButton.className = "player-deck-button";
+  deckButton.type = "button";
+  deckButton.textContent = "view deck";
+  deckButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    window.openDeckModal?.(player, zones);
+  });
   el.appendChild(name);
   el.appendChild(life);
   el.appendChild(meta);
+  el.appendChild(deckButton);
   return el;
 }
 

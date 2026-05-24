@@ -35,6 +35,20 @@
     </section>
   </main>
 
+  <div id="deck-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="deck-modal-title">
+    <div class="modal-backdrop" data-close-modal="deck"></div>
+    <section class="deck-modal-card">
+      <header class="deck-modal-head">
+        <div>
+          <h2 id="deck-modal-title">library and deck</h2>
+          <div id="deck-modal-meta"></div>
+        </div>
+        <button id="deck-modal-close" type="button" aria-label="close deck modal">×</button>
+      </header>
+      <div id="deck-modal-body"></div>
+    </section>
+  </div>
+
   <script src="/static/board.js"></script>
   <script src="/static/app.js"></script>
 </body>

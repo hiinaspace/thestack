@@ -196,6 +196,8 @@ def _public_event_text(event: dict, player_names_by_id: dict[str, str]) -> str:
         source = _event_card_name(event)
         target = _damage_target_name(event, player_names_by_id)
         return f"{source} dealt {event.get('amount') or '?'} damage to {target}"
+    if event_type == "BecomesTarget":
+        return _format_becomes_target(event)
     if event_type == "Tapped":
         return f"{_event_card_name(event)} tapped"
     if event_type == "ZoneChange":
@@ -259,3 +261,19 @@ def _fmt_zone(zone: str) -> str:
 def _player_from_raw_text(text: str, player_names_by_id: dict[str, str]) -> str:
     m = re.search(r"playerId=([0-9a-f-]{36})", text, re.IGNORECASE)
     return player_names_by_id.get(m.group(1), "") if m else ""
+
+
+def _format_becomes_target(event: dict) -> str:
+    text = event.get("text") or ""
+    target = _raw_event_field(text, "targetName")
+    source = _raw_event_field(text, "sourceName")
+    if target and source:
+        return f"{target} became target of {source}"
+    if target:
+        return f"{target} became a target"
+    return ""
+
+
+def _raw_event_field(text: str, field: str) -> str:
+    m = re.search(rf"{re.escape(field)}=([^,)]+)", text)
+    return m.group(1).strip() if m else ""

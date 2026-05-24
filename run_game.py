@@ -94,8 +94,12 @@ def run_game(
         persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
 
         agents = {
-            persona_a.name: PlayerAgent(persona_a, persona_b.name, model, client, event_log),
-            persona_b.name: PlayerAgent(persona_b, persona_a.name, model, client, event_log),
+            persona_a.name: PlayerAgent(
+                persona_a, persona_b.name, model, client, event_log, deck=deck_a
+            ),
+            persona_b.name: PlayerAgent(
+                persona_b, persona_a.name, model, client, event_log, deck=deck_b
+            ),
         }
         commentator = CommentatorAgent(client, event_log, model=model)
 
@@ -360,10 +364,10 @@ def run_game(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run an LLM MTG game via Argentum Engine")
     parser.add_argument("--game-id", default=None)
-    parser.add_argument("--persona-a", default="aria", help="persona slug (dir in personas/)")
-    parser.add_argument("--persona-b", default="bryn", help="persona slug (dir in personas/)")
-    parser.add_argument("--deck-a", default="red_rush", choices=DECK_NAMES)
-    parser.add_argument("--deck-b", default="green_might", choices=DECK_NAMES)
+    parser.add_argument("--persona-a", default="mira", help="persona slug (dir in personas/)")
+    parser.add_argument("--persona-b", default="noct", help="persona slug (dir in personas/)")
+    parser.add_argument("--deck-a", default="white_aegis", choices=DECK_NAMES)
+    parser.add_argument("--deck-b", default="black_attrition", choices=DECK_NAMES)
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--max-steps", type=int, default=500)
     parser.add_argument("--verbose", action="store_true", default=True)

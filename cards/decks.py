@@ -1,15 +1,8 @@
 """Portal-set deck configs for the Argentum Engine gym-server.
 
-Argentum's gym `/step` endpoint takes only an `actionId`, so any LegalAction
-that the engine emits as a "shell" awaiting client-side binding (cast targets,
-attacker/blocker assignments) is no-op for us unless the gym pre-expands it.
-The local fork in `~/lib/argentum-engine` carries that expansion patch
-(`gym/contract/LegalActionExpander.kt`), so single-target spells like
-Volcanic Hammer and Lava Axe work end-to-end.
-
-Still avoided here: spells whose targeting needs a structured decision the
-gym doesn't fold (e.g. Forked Lightning's distribute-damage and Nature's
-Lore's library search).
+The local fork in `~/lib/argentum-engine` exposes rich legal actions plus
+structured decision prompts, so these decks can include targeted spells,
+multi-target removal, and simple library-search effects.
 """
 
 from __future__ import annotations
@@ -17,6 +10,33 @@ from __future__ import annotations
 # Deck configs: card name -> quantity.
 # All cards must be implemented in ~/lib/argentum-engine/mtg-sets/definitions/por/.
 DECKS: dict[str, dict[str, int]] = {
+    "white_aegis": {
+        "Plains": 24,
+        "Armored Pegasus": 4,  # 1/2 flying for {1}{W}
+        "Knight Errant": 4,  # 2/2 for {1}{W}
+        "Charging Paladin": 4,  # 2/2 that attacks as 2/5 for {2}{W}
+        "Venerable Monk": 4,  # 2/2, gain 2 on ETB for {2}{W}
+        "Border Guard": 3,  # 1/4 for {2}{W}
+        "Ardent Militia": 3,  # 2/5 vigilance for {4}{W}
+        "Angelic Blessing": 4,  # +3/+3 and flying for {2}{W}
+        "Warrior's Charge": 3,  # team +1/+1 for {2}{W}
+        "Path of Peace": 4,  # destroy target creature, owner gains 4 for {3}{W}
+        "Vengeance": 3,  # destroy target tapped creature for {3}{W}
+    },
+    "black_attrition": {
+        "Swamp": 24,
+        "Muck Rats": 4,  # 1/1 for {B}
+        "Bog Imp": 4,  # 1/1 flying for {1}{B}
+        "Feral Shadow": 4,  # 2/1 flying for {2}{B}
+        "Bog Raiders": 3,  # 2/2 for {2}{B}
+        "Serpent Warrior": 4,  # 3/3, lose 3 on ETB for {2}{B}
+        "Gravedigger": 3,  # 2/2, return creature from graveyard for {3}{B}
+        "Arrogant Vampire": 3,  # 4/3 flying for {3}{B}{B}
+        "Hand of Death": 4,  # destroy target nonblack creature for {2}{B}
+        "Vampiric Touch": 3,  # drain opponent for 2 for {2}{B}
+        "Mind Rot": 2,  # target player discards two for {2}{B}
+        "Wicked Pact": 2,  # destroy two nonblack creatures, lose 5 for {1}{B}{B}
+    },
     "red_rush": {
         "Mountain": 24,
         "Goblin Bully": 4,  # 2/1 for {1}{R}

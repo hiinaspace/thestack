@@ -8,6 +8,7 @@ const state = {
   playersById: {},       // stable player id -> display name for event summaries
   playerOrder: [],       // display order from the first observation
   cardNames: [],         // canonical names for rich text card hovers
+  initialDecks: {},      // player name -> counted full deck from first observation
   personas: {},          // {persona_name: {filestem: text}}
   oracle: {},            // {cardName: {oracle_text, type_line, mana_cost, ...}}
   step: 0,               // index into scrubObservations[]
@@ -16,6 +17,8 @@ const state = {
 };
 
 window.thestackOracle = state.oracle;
+window.thestackDecks = state.initialDecks;
+window.openDeckModal = openDeckModal;
 
 // ---------------------------------------------------------------- DOM refs
 
@@ -30,6 +33,11 @@ const $tabBody = document.getElementById("tab-body");
 const $prev = document.getElementById("prev");
 const $next = document.getElementById("next");
 const $showAll = document.getElementById("show-all");
+const $deckModal = document.getElementById("deck-modal");
+const $deckModalTitle = document.getElementById("deck-modal-title");
+const $deckModalMeta = document.getElementById("deck-modal-meta");
+const $deckModalBody = document.getElementById("deck-modal-body");
+const $deckModalClose = document.getElementById("deck-modal-close");
 
 let activeThoughtTooltip = null;
 let thoughtHideTimer = null;
@@ -52,7 +60,13 @@ $showAll.addEventListener("change", () => {
     `${state.events.length} events · ${state.observations.length} board states` +
     ` · scrubbing ${state.scrubObservations.length}`;
 });
+$deckModalClose?.addEventListener("click", closeDeckModal);
+$deckModal?.addEventListener("click", (e) => {
+  if (e.target.dataset.closeModal === "deck") closeDeckModal();
+});
 document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeDeckModal();
+  if ($deckModal && !$deckModal.classList.contains("hidden")) return;
   if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
   if (e.key === "ArrowLeft") setStep(state.step - 1);
   else if (e.key === "ArrowRight") setStep(state.step + 1);
@@ -108,6 +122,7 @@ async function loadGame(gameId) {
   state.observations = [];
   state.playersById = {};
   state.playerOrder = [];
+  state.initialDecks = {};
   for (let i = 0; i < state.events.length; i++) {
     if (state.events[i].event === "observation") {
       state.observations.push(i);
@@ -117,6 +132,8 @@ async function loadGame(gameId) {
       }
     }
   }
+  state.initialDecks = collectInitialDecks(state.events);
+  window.thestackDecks = state.initialDecks;
   mergeCardNames(collectCardNamesFromEvents(state.events));
   rebuildScrubObservations();
   state.personas = pd;
@@ -242,6 +259,103 @@ function setStep(n) {
   params.set("step", String(n));
   const url = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState(null, "", url);
+}
+
+// --------------------------------------------------------------- deck modal
+
+function openDeckModal(player, zones = {}) {
+  if (!$deckModal || !$deckModalBody) return;
+  const deck = state.initialDecks[player.name] || countCardsFromZones(zones);
+  const library = zones.Library || [];
+
+  $deckModalTitle.textContent = `${player.name} — library and deck`;
+  $deckModalMeta.textContent =
+    `${library.length} cards currently in library · ${deck.total} cards in original deck`;
+  $deckModalBody.replaceChildren();
+
+  const librarySection = document.createElement("section");
+  librarySection.className = "deck-modal-section";
+  const libraryTitle = document.createElement("h3");
+  libraryTitle.textContent = "Current library (top first)";
+  librarySection.appendChild(libraryTitle);
+  librarySection.appendChild(libraryListEl(library));
+
+  const deckSection = document.createElement("section");
+  deckSection.className = "deck-modal-section";
+  const deckTitle = document.createElement("h3");
+  deckTitle.textContent = "Full decklist";
+  deckSection.appendChild(deckTitle);
+  deckSection.appendChild(deckCountListEl(deck.cards));
+
+  $deckModalBody.appendChild(librarySection);
+  $deckModalBody.appendChild(deckSection);
+  $deckModal.classList.remove("hidden");
+}
+
+function closeDeckModal() {
+  if (!$deckModal || $deckModal.classList.contains("hidden")) return;
+  $deckModal.classList.add("hidden");
+  $deckModalBody?.replaceChildren();
+}
+
+function libraryListEl(cards) {
+  const list = document.createElement("ol");
+  list.className = "deck-card-list deck-library-list";
+  if (!cards.length) {
+    const empty = document.createElement("li");
+    empty.className = "empty";
+    empty.textContent = "(empty)";
+    list.appendChild(empty);
+    return list;
+  }
+  for (const card of cards) {
+    const item = document.createElement("li");
+    item.className = "deck-card-row";
+    appendCardToken(item, cardDisplayName(card));
+    list.appendChild(item);
+  }
+  return list;
+}
+
+function deckCountListEl(cards) {
+  const list = document.createElement("div");
+  list.className = "deck-card-list deck-count-list";
+  if (!cards.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "(no deck data)";
+    list.appendChild(empty);
+    return list;
+  }
+  for (const row of cards) {
+    const item = document.createElement("div");
+    item.className = "deck-card-row";
+    const count = document.createElement("span");
+    count.className = "deck-card-count";
+    count.textContent = `${row.count}x`;
+    item.appendChild(count);
+    appendCardToken(item, row.name);
+    const oracle = state.oracle[row.name] || state.oracle[row.name.toLowerCase()];
+    const type = oracle?.type_line || row.sample?.types?.join(" ");
+    if (type) {
+      const typeEl = document.createElement("span");
+      typeEl.className = "deck-card-type";
+      typeEl.textContent = type;
+      item.appendChild(typeEl);
+    }
+    list.appendChild(item);
+  }
+  return list;
+}
+
+function appendCardToken(parent, name) {
+  const token = document.createElement("span");
+  token.className = "card-text-token";
+  token.textContent = name || "?";
+  if (typeof window.attachCardHover === "function") {
+    window.attachCardHover(token, { name });
+  }
+  parent.appendChild(token);
 }
 
 // --------------------------------------------------------------- tab body
@@ -557,6 +671,7 @@ function publicEngineText(ev) {
   if (ev.type === "DamageDealt") {
     return `${card} dealt ${ev.amount || "?"} damage to ${eventDamageTarget(ev)}`;
   }
+  if (ev.type === "BecomesTarget") return formatBecomesTarget(ev);
   if (ev.type === "Tapped") return `${card} tapped`;
   if (ev.type === "ZoneChange") return formatZoneChange(ev);
   if (ev.type === "PlayerLost") return `${eventPlayerFromRawText(ev.text) || who} lost`;
@@ -603,6 +718,20 @@ function formatZoneChange(ev) {
   return `${card} moved ${from} -> ${to}`;
 }
 
+function formatBecomesTarget(ev) {
+  const target = rawEventField(ev.text || "", "targetName");
+  const source = rawEventField(ev.text || "", "sourceName");
+  if (target && source) return `${target} became target of ${source}`;
+  if (target) return `${target} became a target`;
+  return "";
+}
+
+function rawEventField(text, field) {
+  const re = new RegExp(`${field}=([^,)]+)`);
+  const m = text.match(re);
+  return m ? m[1].trim() : "";
+}
+
 function fmtZone(zone) {
   return zone.replace(/_/g, " ").toLowerCase();
 }
@@ -637,6 +766,58 @@ function collectCardNamesFromEvents(events) {
     collectCardNamesFromObservation(names, e.obs);
   }
   return [...names];
+}
+
+function collectInitialDecks(events) {
+  const firstObs = (events || []).find((e) => e.event === "observation")?.obs;
+  if (!firstObs) return {};
+  const byPlayer = {};
+  const playerNames = {};
+  for (const p of firstObs.players || []) playerNames[p.id] = p.name;
+  for (const zone of firstObs.zones || []) {
+    const player = playerNames[zone.ownerId];
+    if (!player || zone.hidden) continue;
+    if (!byPlayer[player]) byPlayer[player] = [];
+    byPlayer[player].push(...(zone.cards || []));
+  }
+
+  const decks = {};
+  for (const [player, cards] of Object.entries(byPlayer)) {
+    decks[player] = countCards(cards);
+  }
+  return decks;
+}
+
+function countCardsFromZones(zones) {
+  const cards = [];
+  for (const zoneCards of Object.values(zones || {})) {
+    cards.push(...(zoneCards || []));
+  }
+  return countCards(cards);
+}
+
+function countCards(cards) {
+  const rows = new Map();
+  for (const card of cards || []) {
+    const name = cardDisplayName(card);
+    if (!name) continue;
+    const row = rows.get(name) || { name, count: 0, sample: card };
+    row.count += 1;
+    rows.set(name, row);
+  }
+  const sorted = [...rows.values()].sort((a, b) => {
+    const aLand = isLandName(a.name) ? 1 : 0;
+    const bLand = isLandName(b.name) ? 1 : 0;
+    if (aLand !== bLand) return aLand - bLand;
+    return a.name.localeCompare(b.name);
+  });
+  const total = sorted.reduce((sum, row) => sum + row.count, 0);
+  return { total, cards: sorted };
+}
+
+function isLandName(name) {
+  const card = state.oracle[name] || state.oracle[name.toLowerCase()];
+  return /land/i.test(card?.type_line || "");
 }
 
 function collectCardNamesFromObservation(names, obs) {
