@@ -60,6 +60,10 @@ Rules of the game:
     biggest X you can afford that still serves the plan.
   - Targeted spells: skip any action tagged [NO VALID TARGETS]. Removal hits
     the opponent's most dangerous creature; pump hits your own attacker.
+  - Mana abilities ("{T}: Add {X}") only matter if you immediately spend that
+    mana on a spell — mana left in your pool evaporates at end of step. If
+    you have no spell to cast, pass priority instead of tapping a land for
+    nothing.
 
 Play to win, but you are also a character — your reasoning is the show."""
     )

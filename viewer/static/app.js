@@ -2,12 +2,17 @@
 
 const state = {
   gameId: null,
-  events: [],          // raw event list
-  observations: [],    // indices into events[] where event === "observation"
-  personas: {},        // {persona_name: {filestem: text}}
-  step: 0,             // index into observations[]
+  events: [],            // raw event list
+  observations: [],      // ALL observation indices into events[]
+  scrubObservations: [], // observation indices the scrubber stops on
+  personas: {},          // {persona_name: {filestem: text}}
+  oracle: {},            // {cardName: {oracle_text, type_line, mana_cost, ...}}
+  step: 0,               // index into scrubObservations[]
   activeTab: null,
+  showAllSteps: false,   // toggle: include autopass-only observations
 };
+
+window.thestackOracle = state.oracle;
 
 // ---------------------------------------------------------------- DOM refs
 
@@ -21,6 +26,7 @@ const $tabs = document.getElementById("tabs");
 const $tabBody = document.getElementById("tab-body");
 const $prev = document.getElementById("prev");
 const $next = document.getElementById("next");
+const $showAll = document.getElementById("show-all");
 
 // ------------------------------------------------------------------ events
 
@@ -28,6 +34,18 @@ $picker.addEventListener("change", () => loadGame($picker.value));
 $scrubber.addEventListener("input", (e) => setStep(parseInt(e.target.value, 10)));
 $prev.addEventListener("click", () => setStep(state.step - 1));
 $next.addEventListener("click", () => setStep(state.step + 1));
+$showAll.addEventListener("change", () => {
+  state.showAllSteps = $showAll.checked;
+  // Map the current obs index onto the new list, then re-clamp.
+  const curObsIdx = currentObsIndex();
+  rebuildScrubObservations();
+  $scrubber.max = Math.max(0, state.scrubObservations.length - 1);
+  const newStep = state.scrubObservations.indexOf(curObsIdx);
+  setStep(newStep >= 0 ? newStep : 0);
+  $summary.textContent =
+    `${state.events.length} events · ${state.observations.length} board states` +
+    ` · scrubbing ${state.scrubObservations.length}`;
+});
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
   if (e.key === "ArrowLeft") setStep(state.step - 1);
@@ -37,6 +55,13 @@ document.addEventListener("keydown", (e) => {
 // -------------------------------------------------------------- bootstrap
 
 (async function init() {
+  // Fetch the oracle lookup once — used by board.js to enrich tooltips when
+  // the obs's own oracleText is empty (most non-land cards).
+  try {
+    const oracle = await fetch("/api/oracle").then((r) => r.json());
+    Object.assign(state.oracle, oracle);
+  } catch (_e) { /* viewer still works without it */ }
+
   const list = await fetch("/api/games").then((r) => r.json());
   if (list.length === 0) {
     $summary.textContent = "no games found in games/";
@@ -72,14 +97,53 @@ async function loadGame(gameId) {
   for (let i = 0; i < state.events.length; i++) {
     if (state.events[i].event === "observation") state.observations.push(i);
   }
+  rebuildScrubObservations();
   state.personas = pd;
   state.step = 0;
 
   buildTabs();
-  $scrubber.max = Math.max(0, state.observations.length - 1);
+  $scrubber.max = Math.max(0, state.scrubObservations.length - 1);
   $scrubber.value = 0;
   setStep(0);
-  $summary.textContent = `${state.events.length} events · ${state.observations.length} board states`;
+  $summary.textContent =
+    `${state.events.length} events · ${state.observations.length} board states` +
+    ` · scrubbing ${state.scrubObservations.length}`;
+}
+
+/**
+ * Build the list of observation indices the scrubber stops on. Skip observations
+ * whose preceding action was an autopass — those are the "and now both bots
+ * passed through the upkeep" beats nobody wants to scrub through. Always
+ * include the first and last observation.
+ */
+function rebuildScrubObservations() {
+  if (state.showAllSteps) {
+    state.scrubObservations = [...state.observations];
+    return;
+  }
+  const keep = [];
+  for (let k = 0; k < state.observations.length; k++) {
+    const obsIdx = state.observations[k];
+    const isFirst = k === 0;
+    const isLast = k === state.observations.length - 1;
+    if (isFirst || isLast) {
+      keep.push(obsIdx);
+      continue;
+    }
+    // Look backwards from obsIdx for the action that produced it; keep iff
+    // that action wasn't autopass.
+    let producedByAutopass = false;
+    for (let j = obsIdx - 1; j >= 0; j--) {
+      const ev = state.events[j];
+      if (ev.event === "action") {
+        producedByAutopass = (ev.reasoning || "").startsWith("[autopass]");
+        break;
+      }
+      if (ev.event === "observation") break;
+    }
+    if (!producedByAutopass) keep.push(obsIdx);
+  }
+  state.scrubObservations = keep;
 }
 
 // ------------------------------------------------------------------- tabs
@@ -112,7 +176,7 @@ function activateTab(id) {
 // ------------------------------------------------------------------- step
 
 function currentObsIndex() {
-  return state.observations[state.step];
+  return state.scrubObservations[state.step];
 }
 
 function currentObs() {
@@ -121,11 +185,11 @@ function currentObs() {
 }
 
 function setStep(n) {
-  if (state.observations.length === 0) return;
-  n = Math.max(0, Math.min(n, state.observations.length - 1));
+  if (state.scrubObservations.length === 0) return;
+  n = Math.max(0, Math.min(n, state.scrubObservations.length - 1));
   state.step = n;
   $scrubber.value = n;
-  $stepLabel.textContent = `${n + 1} / ${state.observations.length}`;
+  $stepLabel.textContent = `${n + 1} / ${state.scrubObservations.length}`;
   const obs = currentObs();
   const turn = obs?.turnNumber ?? "?";
   const phase = obs?.phase ?? "?";
@@ -156,7 +220,10 @@ function renderTab() {
   }
 
   if (tab === "all-events") {
-    renderEventStream(state.events.slice(0, currentObsIndex() + 1));
+    const filtered = state.events
+      .slice(0, currentObsIndex() + 1)
+      .filter((e) => state.showAllSteps || !isAutopassNoise(e));
+    renderEventStream(filtered);
     return;
   }
 
@@ -174,11 +241,19 @@ function renderTab() {
       .slice(0, currentObsIndex() + 1)
       .filter((e) => {
         if (!["reasoning", "thinking", "tool_call", "action"].includes(e.event)) return false;
-        return e.player === persona;
+        if (e.player !== persona) return false;
+        if (!state.showAllSteps && isAutopassNoise(e)) return false;
+        return true;
       });
     renderEventStream(filtered);
     return;
   }
+}
+
+function isAutopassNoise(e) {
+  if (e.event === "autopass") return true;
+  if (e.event === "action" && (e.reasoning || "").startsWith("[autopass]")) return true;
+  return false;
 }
 
 function renderMemoryTab(persona) {

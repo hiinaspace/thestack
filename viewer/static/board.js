@@ -26,17 +26,46 @@ function cardEl(c) {
     el.appendChild(pt);
   }
 
-  if (c.oracleText || c.manaCost || c.types?.length) {
-    const tip = document.createElement("div");
-    tip.className = "card-tooltip";
-    const cost = c.manaCost ? `${c.manaCost} ` : "";
-    const types = c.types?.length ? `[${c.types.join(", ")}] ` : "";
-    const oracle = c.oracleText || "";
-    tip.textContent = `${cost}${types}${oracle}`;
-    el.appendChild(tip);
-  }
+  const tip = buildCardTooltip(c);
+  if (tip) el.appendChild(tip);
 
   return el;
+}
+
+function buildCardTooltip(c) {
+  // Prefer scryfall data (loaded into window.thestackOracle by app.js init)
+  // when the obs's own oracleText is empty; the gym only populates it for
+  // lands and a few other rule-based cards.
+  const oracleMap = window.thestackOracle || {};
+  const scry = oracleMap[c.name] || null;
+
+  const cost = c.manaCost || scry?.mana_cost || "";
+  const typeLine = scry?.type_line || (c.types?.length ? c.types.join(", ") : "");
+  const oracle = c.oracleText || scry?.oracle_text || "";
+  if (!cost && !typeLine && !oracle && c.power == null) return null;
+
+  const tip = document.createElement("div");
+  tip.className = "card-tooltip";
+  const header = document.createElement("div");
+  header.className = "card-tooltip-head";
+  let pt = "";
+  if (c.power != null) pt = `  ${c.power}/${c.toughness}`;
+  else if (scry?.power != null) pt = `  ${scry.power}/${scry.toughness}`;
+  header.textContent = `${c.name}${pt}  ${cost}`.trim();
+  tip.appendChild(header);
+  if (typeLine) {
+    const t = document.createElement("div");
+    t.className = "card-tooltip-type";
+    t.textContent = typeLine;
+    tip.appendChild(t);
+  }
+  if (oracle) {
+    const o = document.createElement("div");
+    o.className = "card-tooltip-oracle";
+    o.textContent = oracle;
+    tip.appendChild(o);
+  }
+  return tip;
 }
 
 function zoneEl(label, cards) {

@@ -87,6 +87,16 @@ body {
   white-space: nowrap;
 }
 
+#show-all-toggle {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 #prev, #next {
   background: var(--panel-2);
   color: var(--text);
@@ -224,6 +234,21 @@ main {
 
 .card:hover .card-tooltip {
   display: block;
+}
+
+.card-tooltip-head {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.card-tooltip-type {
+  color: var(--muted);
+  font-size: 11px;
+  margin: 2px 0 4px;
+}
+
+.card-tooltip-oracle {
+  font-style: italic;
 }
 
 .stack-zone {

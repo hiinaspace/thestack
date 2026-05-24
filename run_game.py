@@ -117,6 +117,8 @@ def run_game(
     step_count = 0
     stop_reason = "step_limit"
     winner_name: str | None = None
+    # Actions taken this turn — drained when the commentator runs.
+    turn_actions: list[dict] = []
 
     try:
         while step_count < max_steps:
@@ -141,7 +143,10 @@ def run_game(
             new_turn = obs.get("turnNumber", 0)
             if new_turn > current_turn:
                 if commentator is not None and current_turn > 0:
-                    commentator.comment_on_turn(obs, current_turn, verbose=verbose)
+                    commentator.comment_on_turn(
+                        obs, current_turn, recent_actions=turn_actions, verbose=verbose
+                    )
+                turn_actions = []
                 current_turn = new_turn
                 if verbose:
                     lives = {p["name"]: p["lifeTotal"] for p in obs["players"]}
@@ -176,25 +181,31 @@ def run_game(
                     AUTOPASS,
                     {"player": acting_name, "action_id": action_id, "reason": reason},
                 )
-                # Still log a thin ACTION event so the timeline reads cleanly.
                 chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
-                event_log.append(
-                    ACTION,
-                    {
-                        "player": acting_name,
-                        "action_id": action_id,
-                        "description": chosen.get("description") if chosen else None,
-                        "reasoning": f"[autopass] {reason}",
-                    },
-                )
+                action_record = {
+                    "player": acting_name,
+                    "action_id": action_id,
+                    "description": chosen.get("description") if chosen else None,
+                    "reasoning": f"[autopass] {reason}",
+                }
+                # Still log a thin ACTION event so the timeline reads cleanly.
+                event_log.append(ACTION, action_record)
+                turn_actions.append(action_record)
                 if verbose:
                     print(f"  [{acting_name}] {phase}/{step_name} — autopass ({reason})")
             else:
                 if verbose:
                     print(f"\n  [{acting_name}] {phase}/{step_name} — {len(legal_actions)} actions")
                 action_id = agent.choose_action(obs, verbose=verbose)
+                chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
+                turn_actions.append(
+                    {
+                        "player": acting_name,
+                        "action_id": action_id,
+                        "description": chosen.get("description") if chosen else str(action_id),
+                    }
+                )
                 if verbose:
-                    chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
                     desc = chosen["description"] if chosen else str(action_id)
                     print(f"  [{acting_name}] -> {desc}")
 
@@ -209,7 +220,9 @@ def run_game(
 
     finally:
         if commentator is not None:
-            commentator.comment_on_turn(obs, current_turn, verbose=verbose)
+            commentator.comment_on_turn(
+                obs, current_turn, recent_actions=turn_actions, verbose=verbose
+            )
 
         print(f"\n{'=' * 60}")
         if obs.get("terminated"):

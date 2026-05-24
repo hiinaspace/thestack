@@ -55,6 +55,31 @@ def game_events(game_id: str) -> JSONResponse:
     return JSONResponse({"game_id": game_id, "events": events})
 
 
+@app.get("/api/oracle")
+def oracle_data() -> JSONResponse:
+    """Slim card-name → oracle data map for the viewer's hover tooltips.
+
+    The Argentum observation only carries oracle text for some entries (lands
+    in particular, since they're rule-based); for the rest we fall back to
+    Scryfall data already bundled with the engine.
+    """
+    from llm.oracle import _load  # type: ignore[attr-defined]
+
+    raw = _load()
+    out: dict[str, dict] = {}
+    for name, c in raw.items():
+        slim = {
+            "type_line": c.get("type_line", ""),
+            "mana_cost": c.get("mana_cost", ""),
+            "oracle_text": c.get("oracle_text", ""),
+        }
+        if c.get("power") is not None:
+            slim["power"] = c["power"]
+            slim["toughness"] = c.get("toughness")
+        out[name] = slim
+    return JSONResponse(out)
+
+
 @app.get("/api/games/{game_id}/personas")
 def game_personas(game_id: str) -> JSONResponse:
     pdir = GAMES_DIR / game_id / "personas"
