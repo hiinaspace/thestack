@@ -7,13 +7,15 @@ import uuid
 from pathlib import Path
 
 from cards.decks import DECK_NAMES, get_deck
-from game.events import GAME_OVER, OBSERVATION, EventLog
+from game.events import ACTION, AUTOPASS, GAME_OVER, OBSERVATION, EventLog
 from llm import argentum
+from llm.autopass import autopass_action_id
 from llm.client import DEFAULT_MODEL, make_client
 from llm.commentator import CommentatorAgent
 from llm.meta import reflect_after_game, write_pre_game_strategy
 from llm.persona import Persona
 from llm.player import PlayerAgent
+from llm.random_agent import RandomAgent
 
 
 def run_game(
@@ -25,6 +27,7 @@ def run_game(
     max_steps: int,
     game_id: str,
     verbose: bool,
+    random_agents: bool = False,
 ) -> None:
     persona_a = Persona(persona_a_name)
     persona_b = Persona(persona_b_name)
@@ -38,7 +41,8 @@ def run_game(
 
     print(f"Starting game {game_id}")
     print(f"  {persona_a.name} ({deck_a_name}) vs {persona_b.name} ({deck_b_name})")
-    print(f"  Model: {model} | Max steps: {max_steps}")
+    mode = "random" if random_agents else f"LLM ({model})"
+    print(f"  Mode: {mode} | Max steps: {max_steps}")
     print(f"  Log: {log_path}\n")
 
     if not argentum.health():
@@ -46,47 +50,54 @@ def run_game(
         print("Start it with: JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 just gym-server")
         return
 
-    client = make_client()
+    client = None if random_agents else make_client()
+    commentator = None
 
-    # Snapshot the personas' state at game start so the replay viewer can
-    # show what each agent knew going in (independent of any post-game edits).
-    persona_a.snapshot_to(game_dir / "personas" / persona_a.name)
-    persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
+    if random_agents:
+        agents: dict[str, object] = {
+            persona_a.name: RandomAgent(persona_a.name, event_log, seed=1),
+            persona_b.name: RandomAgent(persona_b.name, event_log, seed=2),
+        }
+    else:
+        # Snapshot the personas' state at game start so the replay viewer can
+        # show what each agent knew going in (independent of any post-game edits).
+        persona_a.snapshot_to(game_dir / "personas" / persona_a.name)
+        persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
 
-    # Pre-game strategy session for each persona. Writes to strategy.md.
-    if verbose:
-        print(f"  [pre-game] {persona_a.name} planning strategy...")
-    write_pre_game_strategy(
-        persona=persona_a,
-        opponent_name=persona_b.name,
-        deck=deck_a,
-        client=client,
-        event_log=event_log,
-        model=model,
-        verbose=verbose,
-    )
-    if verbose:
-        print(f"  [pre-game] {persona_b.name} planning strategy...")
-    write_pre_game_strategy(
-        persona=persona_b,
-        opponent_name=persona_a.name,
-        deck=deck_b,
-        client=client,
-        event_log=event_log,
-        model=model,
-        verbose=verbose,
-    )
+        # Pre-game strategy session for each persona. Writes to strategy.md.
+        if verbose:
+            print(f"  [pre-game] {persona_a.name} planning strategy...")
+        write_pre_game_strategy(
+            persona=persona_a,
+            opponent_name=persona_b.name,
+            deck=deck_a,
+            client=client,
+            event_log=event_log,
+            model=model,
+            verbose=verbose,
+        )
+        if verbose:
+            print(f"  [pre-game] {persona_b.name} planning strategy...")
+        write_pre_game_strategy(
+            persona=persona_b,
+            opponent_name=persona_a.name,
+            deck=deck_b,
+            client=client,
+            event_log=event_log,
+            model=model,
+            verbose=verbose,
+        )
 
-    # Re-snapshot now that strategy.md has been written, so the viewer's
-    # "what they knew" view includes the strategy they walked in with.
-    persona_a.snapshot_to(game_dir / "personas" / persona_a.name)
-    persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
+        # Re-snapshot now that strategy.md has been written, so the viewer's
+        # "what they knew" view includes the strategy they walked in with.
+        persona_a.snapshot_to(game_dir / "personas" / persona_a.name)
+        persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
 
-    agents = {
-        persona_a.name: PlayerAgent(persona_a, persona_b.name, model, client, event_log),
-        persona_b.name: PlayerAgent(persona_b, persona_a.name, model, client, event_log),
-    }
-    commentator = CommentatorAgent(client, event_log, model=model)
+        agents = {
+            persona_a.name: PlayerAgent(persona_a, persona_b.name, model, client, event_log),
+            persona_b.name: PlayerAgent(persona_b, persona_a.name, model, client, event_log),
+        }
+        commentator = CommentatorAgent(client, event_log, model=model)
 
     env_id, obs = argentum.create_env(
         persona_a.name,
@@ -129,7 +140,7 @@ def run_game(
 
             new_turn = obs.get("turnNumber", 0)
             if new_turn > current_turn:
-                if current_turn > 0:
+                if commentator is not None and current_turn > 0:
                     commentator.comment_on_turn(obs, current_turn, verbose=verbose)
                 current_turn = new_turn
                 if verbose:
@@ -144,20 +155,48 @@ def run_game(
 
             legal_actions = obs.get("legalActions", [])
             if not legal_actions:
-                # Argentum is waiting on a structured decision (pendingDecision)
-                # which our harness does not yet implement.
-                stop_reason = "pending_decision_unsupported"
+                # Either a structured decision (Argentum's gym intentionally
+                # strips option IDs for ChooseTargets/Distribute/etc., so we
+                # can't form a response without patching upstream), or a true
+                # dead end. Either way: stop cleanly so the reflector still
+                # runs for whatever we did get done.
+                pd = obs.get("pendingDecision") or {}
+                stop_reason = (
+                    f"structured_decision: {pd.get('kind', '?')} ({pd.get('sourceName', '?')})"
+                    if pd.get("requiresStructuredResponse")
+                    else "no_legal_actions"
+                )
                 break
 
-            if verbose:
-                print(f"\n  [{acting_name}] {phase}/{step_name} — {len(legal_actions)} actions")
-
-            action_id = agent.choose_action(obs, verbose=verbose)
-
-            if verbose:
+            # Skip the LLM call when there's no meaningful choice.
+            autopass = autopass_action_id(obs)
+            if autopass is not None:
+                action_id, reason = autopass
+                event_log.append(
+                    AUTOPASS,
+                    {"player": acting_name, "action_id": action_id, "reason": reason},
+                )
+                # Still log a thin ACTION event so the timeline reads cleanly.
                 chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
-                desc = chosen["description"] if chosen else str(action_id)
-                print(f"  [{acting_name}] -> {desc}")
+                event_log.append(
+                    ACTION,
+                    {
+                        "player": acting_name,
+                        "action_id": action_id,
+                        "description": chosen.get("description") if chosen else None,
+                        "reasoning": f"[autopass] {reason}",
+                    },
+                )
+                if verbose:
+                    print(f"  [{acting_name}] {phase}/{step_name} — autopass ({reason})")
+            else:
+                if verbose:
+                    print(f"\n  [{acting_name}] {phase}/{step_name} — {len(legal_actions)} actions")
+                action_id = agent.choose_action(obs, verbose=verbose)
+                if verbose:
+                    chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
+                    desc = chosen["description"] if chosen else str(action_id)
+                    print(f"  [{acting_name}] -> {desc}")
 
             try:
                 obs = argentum.step(env_id, action_id)
@@ -169,7 +208,8 @@ def run_game(
             step_count += 1
 
     finally:
-        commentator.comment_on_turn(obs, current_turn, verbose=verbose)
+        if commentator is not None:
+            commentator.comment_on_turn(obs, current_turn, verbose=verbose)
 
         print(f"\n{'=' * 60}")
         if obs.get("terminated"):
@@ -186,7 +226,8 @@ def run_game(
 
         # Post-game reflection: only run on a normal termination, so the
         # reflector doesn't write a confused memory entry about a half-game.
-        if stop_reason == "normal":
+        # Skipped for random-agent runs (no persona memory to update).
+        if stop_reason == "normal" and not random_agents:
             for persona, opponent, agent in (
                 (persona_a, persona_b.name, agents[persona_a.name]),
                 (persona_b, persona_a.name, agents[persona_b.name]),
@@ -221,6 +262,11 @@ def main() -> None:
     parser.add_argument("--max-steps", type=int, default=500)
     parser.add_argument("--verbose", action="store_true", default=True)
     parser.add_argument("--quiet", action="store_false", dest="verbose")
+    parser.add_argument(
+        "--random",
+        action="store_true",
+        help="use deterministic RandomAgent instead of LLM (fast harness smoke test)",
+    )
     args = parser.parse_args()
 
     game_id = args.game_id or str(uuid.uuid4())
@@ -233,6 +279,7 @@ def main() -> None:
         max_steps=args.max_steps,
         game_id=game_id,
         verbose=args.verbose,
+        random_agents=args.random,
     )
 
 

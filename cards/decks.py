@@ -1,4 +1,17 @@
-"""Portal-set deck configs for the Argentum Engine gym-server."""
+"""Portal-set deck configs for the Argentum Engine gym-server.
+
+Argentum's gym `/step` endpoint takes only an `actionId`, so any LegalAction
+that the engine emits as a "shell" awaiting client-side binding (cast targets,
+attacker/blocker assignments) is no-op for us unless the gym pre-expands it.
+The local fork in `~/lib/argentum-engine` carries that expansion patch
+(`gym/contract/LegalActionExpander.kt`), so single-target spells like
+Volcanic Hammer and Lava Axe work end-to-end.
+
+Still avoided here: spells whose targeting needs a structured decision the
+gym doesn't fold (e.g. Forked Lightning's distribute-damage, Nature's Lore's
+library search) and Monstrous Growth (multi-target pump support not yet
+expanded).
+"""
 
 from __future__ import annotations
 
@@ -10,24 +23,24 @@ DECKS: dict[str, dict[str, int]] = {
         "Goblin Bully": 4,  # 2/1 for {1}{R}
         "Hulking Goblin": 4,  # 2/2 can't block for {1}{R}
         "Craven Giant": 4,  # 4/1 can't block for {2}{R}
-        "Minotaur Warrior": 4,  # 2/3 for {2}{R} (Hill Giant is a Printing reprint, not registered)
-        "Volcanic Hammer": 4,  # deal 3 to any target (sorcery) for {1}{R}
-        "Lava Axe": 4,  # deal 5 to target player (sorcery) for {4}{R}
-        "Forked Lightning": 4,  # 4 damage divided among up to 3 creatures for {3}{R}
+        "Minotaur Warrior": 4,  # 2/3 for {2}{R}
         "Charging Bandits": 4,  # 2/2 for {2}{R}
         "Raging Minotaur": 4,  # 2/2 for {2}{R}
+        "Volcanic Hammer": 4,  # 3 damage to any target for {1}{R}
+        "Lava Axe": 4,  # 5 damage to target player for {4}{R}
+        "Pyroclasm": 4,  # 2 damage to each creature for {1}{R}
     },
     "green_might": {
         "Forest": 24,
-        "Jungle Lion": 4,  # 2/1 for {G} (Grizzly Bears is a Printing reprint, not registered)
+        "Jungle Lion": 4,  # 2/1 for {G}
         "Gorilla Warrior": 4,  # 2/2 for {1}{G}{G}
         "Elvish Ranger": 4,  # 4/1 for {2}{G}
-        "Rowan Treefolk": 4,  # 3/4 for {3}{G} (Giant Spider is a Printing reprint, not registered)
+        "Rowan Treefolk": 4,  # 3/4 for {3}{G}
         "Panther Warriors": 4,  # 3/2 for {2}{G}
-        "Charging Rhino": 4,  # 4/4 can't be blocked by more than one for {3}{G}{G}
+        "Charging Rhino": 4,  # 4/4 unblockable-by-more-than-one for {3}{G}{G}
         "Spined Wurm": 4,  # 5/4 for {4}{G}
-        "Monstrous Growth": 4,  # +4/+4 until end of turn (sorcery) for {1}{G}
-        "Nature's Lore": 4,  # search for Forest (sorcery) for {1}{G}
+        "Summer Bloom": 4,  # play up to 3 extra lands this turn for {1}{G}
+        "Natural Spring": 4,  # gain 8 life for {2}{G}{G}
     },
 }
 
