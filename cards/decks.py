@@ -43,8 +43,8 @@ DECKS: dict[str, dict[str, int]] = {
         "Hulking Goblin": 4,  # 2/2 can't block for {1}{R}
         "Craven Giant": 4,  # 4/1 can't block for {2}{R}
         "Minotaur Warrior": 4,  # 2/3 for {2}{R}
-        "Charging Bandits": 4,  # 2/2 for {2}{R}
-        "Raging Minotaur": 4,  # 2/2 for {2}{R}
+        "Raging Cougar": 4,  # 2/2 haste for {2}{R}
+        "Raging Minotaur": 4,  # 3/3 haste for {2}{R}{R}
         "Volcanic Hammer": 4,  # 3 damage to any target for {1}{R}
         "Lava Axe": 4,  # 5 damage to target player for {4}{R}
         "Pyroclasm": 4,  # 2 damage to each creature for {1}{R}
@@ -82,6 +82,57 @@ DECKS: dict[str, dict[str, int]] = {
         "Ancestral Memories": 1,  # look at top of library and keep for {2}{U}{U}{U}
         "Personal Tutor": 1,  # tutor a sorcery (SearchLibrary decision) for {U}
     },
+    # Green tutor-heavy ramp. Forces the harness through SEARCH_LIBRARY and
+    # REORDER_LIBRARY structured decisions far more than the base decks do;
+    # Natural Order also exercises sacrifice-as-additional-cost.
+    "green_tutor": {
+        "Forest": 24,
+        "Wood Elves": 4,  # 1/1 for {2}{G}, ETB tutor a Forest to battlefield
+        "Sylvan Tutor": 4,  # tutor a creature to top of library for {G}
+        "Nature's Lore": 4,  # tutor a Forest to battlefield for {1}{G}
+        "Untamed Wilds": 4,  # tutor any basic land to battlefield for {2}{G}
+        "Natural Order": 2,  # sac green creature, tutor green creature for {2}{G}{G}
+        "Elvish Ranger": 4,  # 4/1 for {2}{G}
+        "Rowan Treefolk": 4,  # 3/4 for {3}{G}
+        "Spined Wurm": 4,  # 5/4 for {4}{G} — Natural Order target
+        "Charging Rhino": 2,  # 4/4 unblockable-by-more-than-one for {3}{G}{G}
+        "Monstrous Growth": 4,  # +4/+4 pump for {1}{G}
+    },
+    # Black removal + activated abilities + multi-target instant. King's
+    # Assassin stresses the activated-ability path; Wicked Pact uses TWO
+    # independent CHOOSE_TARGETS slots in one spell. Cruel Tutor adds
+    # SEARCH_LIBRARY at deck-wide breadth.
+    "black_removal": {
+        "Swamp": 24,
+        "King's Assassin": 3,  # 1/1 for {1}{B}{B}; {T}: destroy tapped creature
+        "Bog Imp": 4,  # 1/1 flying for {1}{B}
+        "Feral Shadow": 4,  # 2/1 flying for {2}{B}
+        "Gravedigger": 3,  # 2/2 for {3}{B}, ETB return creature from graveyard
+        "Arrogant Vampire": 3,  # 4/3 flying for {3}{B}{B}
+        "Wicked Pact": 3,  # destroy 2 target nonblack creatures, lose 5 for {1}{B}{B}
+        "Hand of Death": 4,  # destroy target nonblack for {2}{B}
+        "Vampiric Touch": 4,  # drain 2 for {2}{B}
+        "Cruel Tutor": 4,  # tutor any card to top of library, lose 2 for {2}{B}
+        "Mind Rot": 4,  # target player discards 2 for {2}{B}
+    },
+    # White defensive control. Activated + triggered abilities (Stern
+    # Marshal pump on tap, Seasoned Marshal tap-on-attack), conditional
+    # tutor (Gift of Estates), and Breath of Life recursion. Fewer outright
+    # finishers than white_aegis but a much richer decision tree.
+    "white_control": {
+        "Plains": 24,
+        "Armored Pegasus": 4,  # 1/2 flying for {1}{W}
+        "Knight Errant": 4,  # 2/2 for {1}{W}
+        "Border Guard": 4,  # 1/4 for {2}{W}
+        "Stern Marshal": 3,  # 2/2 for {2}{W}; {T}: target creature +2/+2 EOT
+        "Seasoned Marshal": 3,  # 2/2 for {2}{W}{W}; on attack, may tap target creature
+        "Ardent Militia": 2,  # 2/5 vigilance for {4}{W}
+        "Angelic Blessing": 3,  # target creature +3/+3 and flying for {2}{W}
+        "Path of Peace": 3,  # destroy target creature, owner gains 4 for {3}{W}
+        "Vengeance": 3,  # destroy target tapped creature for {3}{W}
+        "Gift of Estates": 3,  # if opp has more lands, search up to 3 Plains for {1}{W}
+        "Breath of Life": 4,  # return creature card from graveyard to battlefield for {3}{W}
+    },
     # Red with X-cost burn and divided damage on top of the standard rush
     # creatures. Exercises the X-cost shape and the DISTRIBUTE structured
     # decision (Forked Lightning splits 4 damage across 1-3 targets).
@@ -112,7 +163,11 @@ def get_deck(name: str) -> dict[str, int]:
 # Each persona's identity is written around one mono-color archetype; pair
 # them with the matching deck unless the CLI explicitly overrides. Keeps
 # Aria red and Bryn green when you swap personas without remembering to also
-# pass --deck-a / --deck-b.
+# pass --deck-a / --deck-b. The persona identity files in personas/<name>/
+# describe a play STYLE (color, tempo, voice) rather than specific cards,
+# so any deck in the persona's color archetype is a legal pairing —
+# e.g. `--persona-a aria --deck-a red_bolt` puts Aria on a more complex
+# burn list while keeping her voice and play style.
 PERSONA_DEFAULT_DECK: dict[str, str] = {
     "aria": "red_rush",
     "bryn": "green_might",
@@ -122,4 +177,10 @@ PERSONA_DEFAULT_DECK: dict[str, str] = {
 
 
 def default_deck_for(persona_name: str) -> str | None:
+    """Return the default deck slug for a persona, or None if unmapped.
+
+    CLI override: pass --deck-a / --deck-b on run_game.py to use any deck
+    regardless of persona. Personas are intentionally decoupled from
+    specific deck lists so you can mix and match.
+    """
     return PERSONA_DEFAULT_DECK.get(persona_name)
