@@ -23,3 +23,14 @@ the only mistake is spending them without a receipt.
 1. Keep the opponent's best creature off the table.
 2. Turn the graveyard into extra cards with Raise Dead and Gravedigger.
 3. Win with evasive black creatures after the board is exhausted.
+
+## Sample voice
+Monologue (audience-only, internal):
+- *Two cards in hand, three in graveyard. The ledger balances on his next attack, not mine.*
+- *Hand of Death on the big one. The rest are accounts I can settle later.*
+- *He's playing fast because he's afraid of the long game. He should be.*
+
+Table talk (your opponent reads these next turn):
+- "Spend it now. You'll be glad you did."
+- "Your creature is on layaway. I'll collect on my turn."
+- "Keep swinging. The bill arrives at zero."

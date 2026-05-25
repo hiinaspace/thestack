@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "fixture": "forked_lightning_three_targets",
+    "kind": "DISTRIBUTE",
+    "scenario": "Aria casts Forked Lightning (4 damage among 1-3 creatures) into an opponent board with three creatures.",
+    "expected_response_shape": "DistributionResponse with distribution summing to 4 across 1-3 of the listed entityIds.",
+    "perspective_player_name": "aria",
+    "deck": "red_bolt"
+  },
+  "schemaHash": "test-fixture",
+  "perspectivePlayerId": "P-aria",
+  "agentToAct": "P-aria",
+  "turnNumber": 5,
+  "phase": "MAIN",
+  "step": "MAIN_PRECOMBAT",
+  "activePlayerId": "P-aria",
+  "priorityPlayerId": "P-aria",
+  "players": [
+    {
+      "id": "P-aria",
+      "name": "aria",
+      "lifeTotal": 16,
+      "handSize": 3,
+      "librarySize": 47,
+      "graveyardSize": 2,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": true,
+      "isActive": true,
+      "hasPriority": true,
+      "hasLost": false
+    },
+    {
+      "id": "P-bryn",
+      "name": "bryn",
+      "lifeTotal": 18,
+      "handSize": 4,
+      "librarySize": 45,
+      "graveyardSize": 0,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": false,
+      "isActive": false,
+      "hasPriority": false,
+      "hasLost": false
+    }
+  ],
+  "zones": [
+    {
+      "ownerId": "P-aria",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 5,
+      "cards": [
+        {"entityId": "C-mtn-1", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-mtn-2", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-mtn-3", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-mtn-4", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-goblin-1", "cardDefinitionId": "por/Goblin Bully", "name": "Goblin Bully", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["CREATURE"], "subtypes": ["GOBLIN"], "colors": ["RED"], "keywords": [], "manaCost": "{1}{R}", "manaValue": 2, "oracleText": "Goblin Bully attacks each combat if able.", "power": 2, "toughness": 1, "tapped": false, "summoningSick": false}
+      ]
+    },
+    {
+      "ownerId": "P-bryn",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 6,
+      "cards": [
+        {"entityId": "C-forest-1", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-forest-2", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-forest-3", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-lion-1", "cardDefinitionId": "por/Jungle Lion", "name": "Jungle Lion", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["CAT"], "colors": ["GREEN"], "keywords": [], "manaCost": "{G}", "manaValue": 1, "oracleText": "Jungle Lion can't block.", "power": 2, "toughness": 1, "tapped": false, "summoningSick": false},
+        {"entityId": "C-elf-ranger-1", "cardDefinitionId": "por/Elvish Ranger", "name": "Elvish Ranger", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["ELF"], "colors": ["GREEN"], "keywords": [], "manaCost": "{2}{G}", "manaValue": 3, "oracleText": "", "power": 4, "toughness": 1, "tapped": false, "summoningSick": false},
+        {"entityId": "C-treefolk-1", "cardDefinitionId": "por/Rowan Treefolk", "name": "Rowan Treefolk", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["TREEFOLK"], "colors": ["GREEN"], "keywords": [], "manaCost": "{3}{G}", "manaValue": 4, "oracleText": "", "power": 3, "toughness": 4, "tapped": false, "summoningSick": false}
+      ]
+    },
+    {
+      "ownerId": "P-aria",
+      "zoneType": "Hand",
+      "hidden": false,
+      "size": 3,
+      "cards": [
+        {"entityId": "H-volcanic", "cardDefinitionId": "por/Volcanic Hammer", "name": "Volcanic Hammer", "zone": "Hand", "ownerId": "P-aria", "controllerId": null, "types": ["SORCERY"], "subtypes": [], "colors": ["RED"], "keywords": [], "manaCost": "{1}{R}", "manaValue": 2, "oracleText": "Volcanic Hammer deals 3 damage to any target.", "power": null, "toughness": null},
+        {"entityId": "H-axe", "cardDefinitionId": "por/Lava Axe", "name": "Lava Axe", "zone": "Hand", "ownerId": "P-aria", "controllerId": null, "types": ["SORCERY"], "subtypes": [], "colors": ["RED"], "keywords": [], "manaCost": "{4}{R}", "manaValue": 5, "oracleText": "Lava Axe deals 5 damage to target player.", "power": null, "toughness": null},
+        {"entityId": "H-mountain", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Hand", "ownerId": "P-aria", "controllerId": null, "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null}
+      ]
+    },
+    {"ownerId": "P-bryn", "zoneType": "Hand", "hidden": true, "size": 4, "cards": []},
+    {"ownerId": "P-aria", "zoneType": "Graveyard", "hidden": false, "size": 2, "cards": [
+      {"entityId": "G-vh-1", "cardDefinitionId": "por/Volcanic Hammer", "name": "Volcanic Hammer", "zone": "Graveyard", "ownerId": "P-aria", "controllerId": null, "types": ["SORCERY"], "subtypes": [], "colors": ["RED"], "keywords": [], "manaCost": "{1}{R}", "manaValue": 2, "oracleText": "Volcanic Hammer deals 3 damage to any target.", "power": null, "toughness": null}
+    ]},
+    {"ownerId": "P-bryn", "zoneType": "Graveyard", "hidden": false, "size": 0, "cards": []},
+    {"ownerId": "P-aria", "zoneType": "Library", "hidden": true, "size": 47, "cards": []},
+    {"ownerId": "P-bryn", "zoneType": "Library", "hidden": true, "size": 45, "cards": []}
+  ],
+  "stack": [
+    {"entityId": "S-fl-1", "controllerId": "P-aria", "name": "Forked Lightning", "kind": "SPELL", "oracleText": "Forked Lightning deals 4 damage divided as you choose among one, two, or three target creatures.", "targets": []}
+  ],
+  "pendingDecision": {
+    "decisionId": "dec-forked-lightning-1",
+    "kind": "DISTRIBUTE",
+    "playerId": "P-aria",
+    "prompt": "Distribute 4 damage among 1-3 creatures.",
+    "sourceEntityId": "S-fl-1",
+    "sourceName": "Forked Lightning",
+    "effectHint": "Forked Lightning deals 4 damage divided as you choose among one, two, or three target creatures.",
+    "requiresStructuredResponse": true,
+    "shape": {"minSelections": 1, "maxSelections": 3, "totalToDistribute": 4},
+    "targetRequirements": [],
+    "legalTargets": {},
+    "options": [],
+    "modes": [],
+    "optionTexts": [],
+    "distributionTargets": [
+      {"target": {"entityId": "C-lion-1", "kind": "CARD", "label": "Jungle Lion", "cardInfo": {"name": "Jungle Lion", "manaCost": "{G}", "typeLine": "Creature - Cat", "colors": ["GREEN"]}}, "min": 0, "max": 4},
+      {"target": {"entityId": "C-elf-ranger-1", "kind": "CARD", "label": "Elvish Ranger", "cardInfo": {"name": "Elvish Ranger", "manaCost": "{2}{G}", "typeLine": "Creature - Elf", "colors": ["GREEN"]}}, "min": 0, "max": 4},
+      {"target": {"entityId": "C-treefolk-1", "kind": "CARD", "label": "Rowan Treefolk", "cardInfo": {"name": "Rowan Treefolk", "manaCost": "{3}{G}", "typeLine": "Creature - Treefolk", "colors": ["GREEN"]}}, "min": 0, "max": 4}
+    ],
+    "ordered": false,
+    "canCancel": false,
+    "allowPartial": false,
+    "minPerTarget": 1
+  },
+  "legalActions": [],
+  "terminated": false,
+  "winnerId": null,
+  "stateDigest": "test-fixture-fl-distribute"
+}

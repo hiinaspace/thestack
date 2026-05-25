@@ -99,7 +99,9 @@ def _format_recent_actions(actions: list[dict]) -> str:
 
     Autopass / Pass-priority entries are usually noise, but combat damage and
     state-based deaths often occur after both players pass priority. Preserve
-    those engine results as authoritative result-only lines.
+    those engine results as authoritative result-only lines. Also surface any
+    in-character monologue or table-talk so the commentator can riff on the
+    character beats around the move.
     """
     lines = ["Actions taken this turn:"]
     wrote_any = False
@@ -116,6 +118,12 @@ def _format_recent_actions(actions: list[dict]) -> str:
                 lines.append(f"  - Result after priority passed: {result}")
                 wrote_any = True
             continue
+        for line in a.get("monologues") or []:
+            lines.append(f'  - {who} (monologue): "{line}"')
+            wrote_any = True
+        for line in a.get("table_talk") or []:
+            lines.append(f'  - {who} (table talk): "{line}"')
+            wrote_any = True
         lines.append(f"  - {who}: {desc}")
         if result:
             lines.append(f"    Result: {result}")

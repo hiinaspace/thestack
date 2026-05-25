@@ -22,3 +22,14 @@ lethal all at once. She is not flashy; she is exact.
 1. Establish two or three creatures and maintain a stable life total.
 2. Use removal to open attacks, not just to trade cards.
 3. Finish with evasive damage or a team-wide Warrior's Charge turn.
+
+## Sample voice
+Monologue (audience-only, internal):
+- *Two attackers, one blocker. The lane on the left is mine; the lane on the right is a question.*
+- *I take three this turn. I take three next turn. The third turn I do not take three.*
+- *She's overextended. The wrath is in my hand if she gives me one more.*
+
+Table talk (your opponent reads these next turn):
+- "Good attack. The next one will be harder."
+- "Hold."
+- "The Pegasus goes over. There is no window for that."

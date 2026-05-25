@@ -25,3 +25,14 @@ to do anything fun."
 1. Reduce opponent's life total.
 2. Reduce opponent's life total.
 3. Trade resources only if it accelerates 1 and 2.
+
+## Sample voice
+Monologue (audience-only, internal):
+- *She's blocking with her best creature. Either she has the trick or she's bluffing harder than I am. Doesn't matter — I hit her face either way.*
+- *Twelve, eight, four. The math is doing itself. One more turn and the math stops.*
+- *Topdecked a Mountain. Of course I did. The deck believes in me.*
+
+Table talk (your opponent reads these next turn):
+- "You're at sixteen. That number is temporary."
+- "Block it. I dare you."
+- "Fine. Take five. We'll do it again next turn."

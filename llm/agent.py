@@ -11,8 +11,8 @@ from dataclasses import dataclass
 
 import ollama
 
-from game.events import REASONING, THINKING, TOOL_CALL, EventLog
-from llm.tools import Toolbox, serialize_tool_args
+from game.events import MONOLOGUE, REASONING, TABLE_TALK, THINKING, TOOL_CALL, EventLog
+from llm.tools import VOICE_TOOLS, Toolbox, serialize_tool_args
 
 
 @dataclass
@@ -169,11 +169,20 @@ class Agent:
         name = tc.function.name
         args = serialize_tool_args(tc.function.arguments)
         result = self.toolbox.dispatch(name, args)
-        self.event_log.append(
-            TOOL_CALL,
-            {"player": self.name, "tool": name, "args": args, "result": result},
-        )
-        if verbose:
-            arg_preview = ", ".join(f"{k}={v!r}" for k, v in args.items())[:120]
-            print(f"  [{self.name} tool] {name}({arg_preview}) -> {result[:80]}")
+        voice_event = VOICE_TOOLS.get(name)
+        if voice_event:
+            text = str(args.get("text", "")).strip()
+            event_type = MONOLOGUE if voice_event == "monologue" else TABLE_TALK
+            self.event_log.append(event_type, {"player": self.name, "text": text})
+            if verbose and text:
+                label = "monologue" if voice_event == "monologue" else "table talk"
+                print(f"  [{self.name} {label}] {text[:160]}")
+        else:
+            self.event_log.append(
+                TOOL_CALL,
+                {"player": self.name, "tool": name, "args": args, "result": result},
+            )
+            if verbose:
+                arg_preview = ", ".join(f"{k}={v!r}" for k, v in args.items())[:120]
+                print(f"  [{self.name} tool] {name}({arg_preview}) -> {result[:80]}")
         self.history.append({"role": "tool", "content": result, "tool_name": name})

@@ -311,9 +311,16 @@ function currentEventCutoff() {
 }
 
 function isEventForNextBoardState(e) {
-  return ["autopass", "thinking", "tool_call", "action", "engine_event", "reasoning"].includes(
-    e.event
-  );
+  return [
+    "autopass",
+    "thinking",
+    "tool_call",
+    "action",
+    "engine_event",
+    "reasoning",
+    "monologue",
+    "table_talk",
+  ].includes(e.event);
 }
 
 function setStep(n) {
@@ -467,7 +474,12 @@ function renderTab() {
     const filtered = state.events
       .slice(0, currentEventCutoff())
       .filter((e) => {
-        if (!["reasoning", "thinking", "tool_call", "action"].includes(e.event)) return false;
+        if (
+          !["reasoning", "thinking", "tool_call", "action", "monologue", "table_talk"].includes(
+            e.event
+          )
+        )
+          return false;
         if (e.player !== persona) return false;
         if (!state.showAllSteps && isAutopassNoise(e)) return false;
         return true;
@@ -570,6 +582,10 @@ function buildTimelineItems(events, cutoff) {
 
     if (e.event === "commentary") {
       items.push(timelineItem({ kind: "commentary", event: e }, i, cutoff));
+    } else if (e.event === "monologue") {
+      items.push(timelineItem({ kind: "monologue", event: e }, i, cutoff));
+    } else if (e.event === "table_talk") {
+      items.push(timelineItem({ kind: "table_talk", event: e }, i, cutoff));
     } else if (e.event === "info" && e.kind === "post_game_reflection") {
       items.push(timelineItem({ kind: "reflection", event: e }, i, cutoff));
     } else if (e.event === "game_over") {
@@ -616,6 +632,20 @@ function timelineItemEl(item) {
     el.appendChild(h);
     const body = document.createElement("div");
     body.className = "timeline-commentary";
+    appendRichText(body, item.event.text || "");
+    el.appendChild(body);
+    return el;
+  }
+
+  if (item.kind === "monologue" || item.kind === "table_talk") {
+    colorTimelineItem(el, item.event.player);
+    const h = document.createElement("div");
+    h.className = "timeline-head";
+    const label = item.kind === "monologue" ? "monologue" : "table talk";
+    h.textContent = `T${item.event.turn} · ${item.event.player} · ${label}`;
+    el.appendChild(h);
+    const body = document.createElement("div");
+    body.className = `timeline-${item.kind}`;
     appendRichText(body, item.event.text || "");
     el.appendChild(body);
     return el;
@@ -1078,6 +1108,8 @@ function eventEl(e) {
   switch (e.event) {
     case "reasoning":
     case "thinking":
+    case "monologue":
+    case "table_talk":
       body.textContent = e.text || "";
       break;
     case "tool_call":

@@ -81,7 +81,13 @@ class PlayerAgent:
             f"{format_combat_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_mulligan_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_legal_actions(legal_actions, obs, self.name)}\n\n"
-            "Choose one of the numbered legal actions and call submit_action."
+            "Stay in voice. Before you commit to the action, set the scene "
+            "with one quick monologue() line for the audience and, if your "
+            "opponent's last move begged for a response, one table_talk() "
+            "line aimed at them. Then choose a numbered legal action and "
+            "call submit_action. Multiple tool calls in this single response "
+            "are fine — chain monologue → (optional) table_talk → "
+            "submit_action."
         )
 
         response = self.agent.run(user_msg, verbose=verbose)
@@ -103,6 +109,8 @@ class PlayerAgent:
                 "action_id": action_id,
                 "description": chosen.get("description") if chosen else None,
                 "reasoning": response.reasoning,
+                "monologues": list(self.toolbox.turn_monologues),
+                "table_talk": list(self.toolbox.turn_table_talk),
             },
         )
         return action_id
@@ -121,7 +129,9 @@ class PlayerAgent:
             f"{format_observation(obs, self.name)}\n\n"
             f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
             f"{format_structured_decision(obs, self.name)}\n\n"
-            "Construct the DecisionResponse JSON and call submit_decision."
+            "Stay in voice. A quick monologue() line is welcome if this "
+            "decision matters; otherwise just construct the DecisionResponse "
+            "JSON and call submit_decision."
         )
 
         response = self.agent.run(user_msg, verbose=verbose)

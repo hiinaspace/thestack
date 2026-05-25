@@ -6,7 +6,7 @@ import argparse
 import uuid
 from pathlib import Path
 
-from cards.decks import DECK_NAMES, get_deck
+from cards.decks import DECK_NAMES, default_deck_for, get_deck
 from game.events import ACTION, AUTOPASS, ENGINE_EVENT, GAME_OVER, OBSERVATION, EventLog
 from llm import argentum
 from llm.autopass import autopass_action_id
@@ -188,6 +188,7 @@ def run_game(
                     )
                 else:
                     decision_response = agent.choose_decision(obs, verbose=verbose)
+                toolbox = getattr(agent, "toolbox", None)
                 action_record = {
                     "player": acting_name,
                     "action_id": None,
@@ -196,6 +197,8 @@ def run_game(
                         f"{pending_decision.get('prompt', '')}"
                     ),
                     "reasoning": getattr(agent, "last_reasoning", ""),
+                    "monologues": list(getattr(toolbox, "turn_monologues", []) or []),
+                    "table_talk": list(getattr(toolbox, "turn_table_talk", []) or []),
                     "decision_response": decision_response,
                     "turn_number": obs.get("turnNumber"),
                     "phase_step": f"{phase}/{step_name}",
@@ -278,11 +281,14 @@ def run_game(
                 else:
                     action_id = agent.choose_action(obs, verbose=verbose)
                 chosen = next((a for a in legal_actions if a["actionId"] == action_id), None)
+                toolbox = getattr(agent, "toolbox", None)
                 action_record = {
                     "player": acting_name,
                     "action_id": action_id,
                     "description": chosen.get("description") if chosen else str(action_id),
                     "reasoning": getattr(agent, "last_reasoning", ""),
+                    "monologues": list(getattr(toolbox, "turn_monologues", []) or []),
+                    "table_talk": list(getattr(toolbox, "turn_table_talk", []) or []),
                     "turn_number": obs.get("turnNumber"),
                     "phase_step": f"{phase}/{step_name}",
                 }
@@ -293,7 +299,16 @@ def run_game(
             try:
                 previous_digest = obs.get("stateDigest")
                 player_names_by_id = {p["id"]: p["name"] for p in obs.get("players", [])}
-                advance = argentum.advance(env_id, action_id, auto_resolve_decisions=True)
+                x_value, damage_distribution = (
+                    argentum.cast_overrides_for(chosen) if chosen else (None, None)
+                )
+                advance = argentum.advance(
+                    env_id,
+                    action_id,
+                    auto_resolve_decisions=True,
+                    x_value=x_value,
+                    damage_distribution=damage_distribution,
+                )
                 obs = advance["observation"]
                 engine_events = advance.get("events") or []
                 action_record["player_names_by_id"] = player_names_by_id
@@ -409,8 +424,18 @@ def main() -> None:
     parser.add_argument("--game-id", default=None)
     parser.add_argument("--persona-a", default="mira", help="persona slug (dir in personas/)")
     parser.add_argument("--persona-b", default="noct", help="persona slug (dir in personas/)")
-    parser.add_argument("--deck-a", default="white_aegis", choices=DECK_NAMES)
-    parser.add_argument("--deck-b", default="black_attrition", choices=DECK_NAMES)
+    parser.add_argument(
+        "--deck-a",
+        default=None,
+        choices=DECK_NAMES,
+        help="override deck for persona-a (defaults to the persona's archetype deck)",
+    )
+    parser.add_argument(
+        "--deck-b",
+        default=None,
+        choices=DECK_NAMES,
+        help="override deck for persona-b (defaults to the persona's archetype deck)",
+    )
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--max-steps", type=int, default=500)
     parser.add_argument("--verbose", action="store_true", default=True)
@@ -423,11 +448,13 @@ def main() -> None:
     args = parser.parse_args()
 
     game_id = args.game_id or str(uuid.uuid4())
+    deck_a_name = args.deck_a or default_deck_for(args.persona_a) or "white_aegis"
+    deck_b_name = args.deck_b or default_deck_for(args.persona_b) or "black_attrition"
     run_game(
         persona_a_name=args.persona_a,
         persona_b_name=args.persona_b,
-        deck_a_name=args.deck_a,
-        deck_b_name=args.deck_b,
+        deck_a_name=deck_a_name,
+        deck_b_name=deck_b_name,
         model=args.model,
         max_steps=args.max_steps,
         game_id=game_id,

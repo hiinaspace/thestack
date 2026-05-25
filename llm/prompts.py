@@ -47,22 +47,49 @@ This chat persists for the entire game. Each user turn shows you the current
 game state plus a numbered list of legal actions; you commit to one by
 calling the submit_action tool.
 
+## Your three voice registers
+You speak in three distinct registers. Use them deliberately.
+
+  - **think** (private): your raw strategic reasoning in the thinking block.
+    Spectators see it as analysis; it is not in your character voice.
+  - **monologue** (audience-facing, in voice): in-character internal voice. The
+    spectator transcript shows it; your opponent does NOT read it. Use to set
+    up bluffs, react to your opponent's table talk, or build tension before a
+    big play.
+  - **table_talk** (opponent-facing, in voice): in-character lines spoken AT
+    your opponent. Their agent will read these at the start of their next
+    decision — this is real dialogue between two players. Use sparingly; one
+    pointed line beats a paragraph.
+
+Your submit_action `reasoning` argument is the action declaration spectators
+see (e.g. "I burn for five. Lava Axe."). Keep it short and in voice.
+
 Tools:
   - take_note(note)        save a strategic note to your scratchpad (persists)
   - recall_strategy()      retrieve every note you've saved so far
+  - monologue(text)        speak an internal-voice line (spectators only)
+  - table_talk(text)       say a line to your opponent (they will read it)
   - submit_action(id, why) commit to a legal action and end this decision
   - submit_decision(response, why)
                             commit a structured DecisionResponse when asked
 
 Workflow each decision:
-  1. Read the game state and legal actions.
-  2. Optionally call take_note or recall_strategy to think out loud or check
-     your earlier plans.
-  3. If a numbered legal-action menu is shown, call submit_action exactly once.
-     If a structured decision response is requested, call submit_decision exactly
-     once with the requested JSON response object.
-  4. Include a one-or-two sentence in-character reasoning — that text is shown
-     to spectators.
+  1. Read the game state and legal actions. Read any table_talk your opponent
+     just said and decide whether to respond.
+  2. Call monologue() to set the scene in your inner voice, and — when the
+     moment warrants — call table_talk() to speak to your opponent. These are
+     where the entertainment lives; do not skip them on important turns.
+  3. Call submit_action (or submit_decision) exactly once to commit.
+  4. The reasoning text on submit_action is your spoken action declaration
+     ("I burn for five. Lava Axe."). Keep it short.
+
+You can emit several tool calls in a single response — chain them. A normal
+turn looks like:
+    monologue("She blocked with the Pegasus. Cute.") → \
+    table_talk("Hold that block. I'll keep coming.") → \
+    submit_action(7, "Attack with everything.")
+A dull turn (drawing a land, passing in upkeep) needs no voice; just
+submit_action.
 
 Rules of the game:
   - Every action in the list is legal RIGHT NOW; the engine validates.
@@ -95,7 +122,8 @@ Rules of the game:
     with early plays are usually keeps. When bottoming after a mulligan, keep a
     functional land/spell mix.
 
-Play to win, but you are also a character — your reasoning is the show."""
+Play to win, but you are also a character — your reasoning, monologue, and
+table talk are the show. Stay in voice."""
     )
     return "\n\n".join(sections).strip()
 
@@ -241,38 +269,72 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
     return "\n".join(lines)
 
 
-def format_recent_public_actions(actions: list[dict], max_actions: int = 8) -> str:
-    """Compact shared history for player prompts.
+def format_recent_public_actions(
+    actions: list[dict], max_actions: int = 2, max_full_actions: int = 1
+) -> str:
+    """Compact dialogue-style history for player prompts.
 
-    This is passive result injection: the next decision prompt gets a concise
-    public action/result feed, without spending another model turn on reactions.
+    Renders the most recent action with full cartoon framing (table talk,
+    play, declaration, engine result) and a small number of slightly older
+    actions as compact one-liners. Older history beyond ``max_actions``
+    intentionally drops out: the persistent per-game LLM conversation
+    (Ollama agent.history / ClaudeSDKClient session) already carries every
+    earlier turn as a prior user/assistant exchange, so re-rendering them in
+    every new user message bloats the message and (for Claude) costs cache
+    misses on the redundant prefix.
+
+    ``max_full_actions`` controls how many of the most recent actions get
+    the full multi-line framing. The rest are rendered as one-line digests.
     """
     if not actions:
-        return "RECENT PUBLIC ACTIONS:\n  (none yet)"
+        return "--- WHAT JUST HAPPENED ---\n  (the game is just beginning)"
 
     notable = [a for a in actions if _is_notable_public_action(a)]
     if not notable:
-        return "RECENT PUBLIC ACTIONS:\n  (none yet)"
+        return "--- WHAT JUST HAPPENED ---\n  (no notable actions yet)"
 
-    lines = ["RECENT PUBLIC ACTIONS (oldest to newest):"]
-    for action in notable[-max_actions:]:
+    recent = notable[-max_actions:]
+    full_cutoff = max(0, len(recent) - max_full_actions)
+
+    lines = ["--- WHAT JUST HAPPENED (oldest to newest) ---"]
+    for idx, action in enumerate(recent):
         result = _format_public_engine_result(
             action.get("engine_events") or [],
             action.get("player_names_by_id") or {},
         )
         is_pass = _is_pass_action(action)
-        if is_pass and result:
-            lines.append(f"  - Result after priority passed: {result}")
-            continue
-
         who = action.get("player", "?")
         desc = action.get("description") or "?"
-        lines.append(f"  - {who}: {desc}")
+
+        if idx < full_cutoff:
+            # Compact one-liner for older context.
+            if is_pass and result:
+                lines.append(f"  (earlier) Result after priority passed: {result}")
+                continue
+            digest = f"  (earlier) {who}: {desc}"
+            if result:
+                digest += f" | Result: {result}"
+            lines.append(digest)
+            continue
+
+        # Full cartoon framing for the most recent action(s).
+        if is_pass and result:
+            lines.append(f"  Result after priority passed: {result}")
+            continue
+
+        for line in action.get("table_talk") or []:
+            text = _single_line(str(line), 240)
+            if text:
+                lines.append(f'  {who} (table talk): "{text}"')
+
+        lines.append(f"  {who} played: {desc}")
+
         reasoning = (action.get("reasoning") or "").strip()
         if reasoning and not reasoning.startswith("[autopass]"):
-            lines.append(f"    Stated reason: {_single_line(reasoning, 220)}")
+            lines.append(f'  {who} declared: "{_single_line(reasoning, 220)}"')
+
         if result:
-            lines.append(f"    Result: {result}")
+            lines.append(f"  Engine result: {result}")
     return "\n".join(lines)
 
 
@@ -421,11 +483,13 @@ def format_structured_decision(obs: dict, acting_player_name: str) -> str:
 
     kind = pd.get("kind", "?")
     decision_id = pd.get("decisionId", "")
+    constraint_line = _decision_constraint_sentence(pd)
     lines = [
         "STRUCTURED DECISION REQUIRED:",
         f"  Kind: {kind}",
         f"  Decision ID: {decision_id}",
         f"  Prompt: {pd.get('prompt', '')}",
+        f"  REQUIRED: {constraint_line}",
     ]
     if pd.get("sourceName"):
         lines.append(f"  Source: {pd.get('sourceName')}")
@@ -434,7 +498,7 @@ def format_structured_decision(obs: dict, acting_player_name: str) -> str:
 
     shape = pd.get("shape") or {}
     if shape:
-        lines.append(f"  Shape: {_compact_shape(shape)}")
+        lines.append(f"  Shape (machine-readable): {_compact_shape(shape)}")
 
     option_texts = pd.get("optionTexts") or []
     if option_texts:
@@ -481,10 +545,14 @@ def format_structured_decision(obs: dict, acting_player_name: str) -> str:
                 f"    - {_fmt_decision_ref(target)} (min positive {item.get('min', 0)}{max_part})"
             )
 
-    lines.append("  Response shape:")
-    lines.append(f"    {_decision_response_example(kind, decision_id)}")
     lines.append(
-        "Call submit_decision(response, reasoning). Do not call submit_action for this prompt."
+        "  Response shape (illustrative — picks the first legal option; "
+        "substitute the entityIds YOU actually choose based on the board):"
+    )
+    lines.append(f"    {_decision_response_example(pd)}")
+    lines.append(
+        "Call submit_decision(response, reasoning). Do not call submit_action for this prompt. "
+        "Copy entityIds verbatim from the lists above; do not invent or modify them."
     )
     return "\n".join(lines)
 
@@ -583,6 +651,123 @@ def _hand_for(obs: dict, player_name: str) -> list[dict]:
     return []
 
 
+def _decision_constraint_sentence(pd: dict) -> str:
+    """Plain-English restatement of the constraints in pd.shape + pd.*.
+
+    The structured prompt previously surfaced cardinality only through the
+    ``Shape:`` line (e.g. ``minSelections=1, maxSelections=1``). Reflections
+    from both gemma4:e4b and claude-haiku-4-5 specifically flagged that
+    burying the count there made it easy for the model to over- or
+    under-select. The English-sentence restatement is intentionally
+    redundant with the Shape line; the Shape line stays for machine-readable
+    parsing, this line stays for the LLM's natural-language reasoning.
+    """
+    kind = pd.get("kind", "")
+    shape = pd.get("shape") or {}
+    min_sel = int(shape.get("minSelections") or 0)
+    max_sel = int(shape.get("maxSelections") or 0)
+
+    def _count_phrase(min_n: int, max_n: int, noun: str) -> str:
+        if min_n == max_n:
+            return f"exactly {min_n} {noun}{'s' if min_n != 1 else ''}"
+        if min_n == 0 and max_n > 0:
+            return f"0 to {max_n} {noun}s (zero is allowed)"
+        if min_n > 0 and max_n > 0:
+            return f"between {min_n} and {max_n} {noun}s"
+        if min_n > 0 and max_n == 0:
+            return f"at least {min_n} {noun}{'s' if min_n != 1 else ''}"
+        return f"some {noun}s"
+
+    if kind == "CHOOSE_TARGETS":
+        reqs = pd.get("targetRequirements") or []
+        if not reqs:
+            return "choose targets per the prompt"
+        parts = []
+        for req in reqs:
+            min_t = int(req.get("minTargets") or 0)
+            max_t = int(req.get("maxTargets") or 0)
+            parts.append(
+                f"slot {req.get('index', '?')}: "
+                f"{_count_phrase(min_t, max_t, 'target')} from the legal targets list"
+            )
+        return "; ".join(parts) + "."
+
+    if kind == "DISTRIBUTE":
+        total = shape.get("totalToDistribute")
+        min_per = int(pd.get("minPerTarget") or 0)
+        target_count = len(pd.get("distributionTargets") or [])
+        partial_phrase = (
+            " (allowPartial is true; the total may be less if you choose)"
+            if pd.get("allowPartial")
+            else ""
+        )
+        # Effective max chosen targets is min(maxSelections, distributionTargets count).
+        max_chosen = max_sel or target_count
+        chosen_phrase = _count_phrase(max(1, min_sel), max_chosen, "target")
+        per_phrase = (
+            f" with at least {min_per} per chosen target"
+            if min_per > 0
+            else " (per-target minimum: 0; any nonzero is fine)"
+        )
+        if total is not None:
+            return (
+                f"distribute exactly {total} total across {chosen_phrase}{per_phrase}"
+                f"{partial_phrase}."
+            )
+        return f"distribute across {chosen_phrase}{per_phrase}{partial_phrase}."
+
+    if kind in {"SELECT_CARDS", "SEARCH_LIBRARY"}:
+        option_count = len(pd.get("options") or [])
+        max_n = max_sel or option_count
+        cancel_note = (
+            " (canCancel is true; if no card fits, return an empty selection)"
+            if pd.get("canCancel") and min_sel == 0
+            else ""
+        )
+        return f"select {_count_phrase(min_sel, max_n, 'card')} from the options.{cancel_note}"
+
+    if kind in {"ORDER_OBJECTS", "REORDER_LIBRARY"}:
+        n = len(pd.get("options") or [])
+        return f"return all {n} options in your chosen order (every option exactly once)."
+
+    if kind == "CHOOSE_MODE":
+        available = sum(1 for m in (pd.get("modes") or []) if m.get("available", True))
+        n_required = max(1, min_sel)
+        max_n = max_sel or available
+        return (
+            f"choose {_count_phrase(n_required, max_n, 'mode')} from the "
+            f"{available} available mode(s)."
+        )
+
+    if kind == "BUDGET_MODAL":
+        budget = shape.get("budget")
+        return (
+            f"choose any subset of modes whose total cost is within budget={budget}."
+            if budget is not None
+            else "choose any subset of modes that fits the budget shown."
+        )
+
+    if kind == "ASSIGN_DAMAGE":
+        total = shape.get("totalToDistribute") or shape.get("budget")
+        return (
+            f"assign exactly {total} total damage across the targets listed."
+            if total is not None
+            else "assign damage across the targets listed; totals from the prompt."
+        )
+
+    if kind == "SELECT_MANA_SOURCES":
+        return "confirm autoPay=true unless you have a specific mana-source plan."
+
+    if kind == "SPLIT_PILES":
+        return "split the options into the listed piles; each option goes in exactly one pile."
+
+    if kind in {"YES_NO", "CHOOSE_OPTION", "CHOOSE_NUMBER", "CHOOSE_COLOR"}:
+        # These fold into legalActions; structured response is uncommon.
+        return f"answer the {kind} prompt above."
+
+    return "satisfy the decision constraints described above."
+
+
 def _compact_shape(shape: dict) -> str:
     parts = []
     for key in (
@@ -625,52 +810,134 @@ def _fmt_decision_ref(ref: dict) -> str:
     return f"{label}{detail_text}{tapped} [{entity_id}]"
 
 
-def _decision_response_example(kind: str, decision_id: str) -> str:
-    examples = {
-        "CHOOSE_TARGETS": (
-            '{"type":"TargetsResponse","decisionId":"%s",'
-            '"selectedTargets":{"0":["target-entity-id"]}}'
-        ),
-        "DISTRIBUTE": (
-            '{"type":"DistributionResponse","decisionId":"%s",'
-            '"distribution":{"target-entity-id":1}}'
-        ),
-        "SELECT_CARDS": (
-            '{"type":"CardsSelectedResponse","decisionId":"%s","selectedCards":["card-entity-id"]}'
-        ),
-        "SEARCH_LIBRARY": (
-            '{"type":"CardsSelectedResponse","decisionId":"%s","selectedCards":["card-entity-id"]}'
-        ),
-        "ORDER_OBJECTS": (
-            '{"type":"OrderedResponse","decisionId":"%s",'
-            '"orderedObjects":["first-entity-id","second-entity-id"]}'
-        ),
-        "REORDER_LIBRARY": (
-            '{"type":"OrderedResponse","decisionId":"%s",'
-            '"orderedObjects":["top-card-id","next-card-id"]}'
-        ),
-        "CHOOSE_MODE": ('{"type":"ModesChosenResponse","decisionId":"%s","selectedModes":[0]}'),
-        "BUDGET_MODAL": (
-            '{"type":"BudgetModalResponse","decisionId":"%s","selectedModeIndices":[0]}'
-        ),
-        "ASSIGN_DAMAGE": (
-            '{"type":"DamageAssignmentResponse","decisionId":"%s",'
-            '"assignments":{"target-entity-id":1}}'
-        ),
-        "SELECT_MANA_SOURCES": (
-            '{"type":"ManaSourcesSelectedResponse","decisionId":"%s","autoPay":true}'
-        ),
-        "SPLIT_PILES": (
-            '{"type":"PilesSplitResponse","decisionId":"%s","piles":[["card-a"],["card-b"]]}'
-        ),
-    }
-    return (
-        examples.get(
-            kind,
-            '{"type":"<ResponseType>","decisionId":"%s"}',
+def _decision_response_example(pd: dict) -> str:
+    """Build an example DecisionResponse, substituting REAL entityIds when present.
+
+    Earlier versions of this function emitted literal placeholder tokens like
+    ``"card-entity-id"`` in the example JSON. Smaller models (observed with
+    gemma4:e4b) copy that placeholder verbatim and concatenate it with a real
+    id — emitting e.g. ``"card-entity-id-L-time-ebb"`` — which fails
+    validation. Pulling a real entityId out of the pending decision keeps the
+    example concretely correct, so even a model that "just copies the shape"
+    produces something the engine will accept.
+    """
+    import json as _json
+
+    kind = pd.get("kind", "")
+    decision_id = pd.get("decisionId", "")
+
+    def _first_option_id() -> str:
+        for opt in pd.get("options") or []:
+            entity_id = opt.get("entityId")
+            if entity_id:
+                return str(entity_id)
+        return "<entityId-from-options-above>"
+
+    def _first_n_option_ids(n: int) -> list[str]:
+        ids = [str(o["entityId"]) for o in (pd.get("options") or []) if o.get("entityId")]
+        if len(ids) >= n:
+            return ids[:n]
+        # Pad with obvious placeholders so the shape is still readable.
+        ids += [f"<entityId-{i + 1}-from-options-above>" for i in range(n - len(ids))]
+        return ids
+
+    def _first_distribution_id() -> str:
+        for dt in pd.get("distributionTargets") or []:
+            entity_id = (dt.get("target") or {}).get("entityId")
+            if entity_id:
+                return str(entity_id)
+        return "<entityId-from-distributionTargets-above>"
+
+    def _first_target_id_for_slot(slot: int) -> str:
+        legal = pd.get("legalTargets") or {}
+        candidates = legal.get(str(slot)) or legal.get(slot) or []
+        for ref in candidates:
+            entity_id = ref.get("entityId")
+            if entity_id:
+                return str(entity_id)
+        return "<entityId-from-legalTargets-above>"
+
+    if kind == "CHOOSE_TARGETS":
+        selected: dict[str, list[str]] = {}
+        for req in pd.get("targetRequirements") or [{"index": 0, "minTargets": 1}]:
+            idx = req.get("index", 0)
+            min_t = max(1, int(req.get("minTargets") or 1))
+            selected[str(idx)] = [_first_target_id_for_slot(idx)] * min_t
+        return _json.dumps(
+            {"type": "TargetsResponse", "decisionId": decision_id, "selectedTargets": selected}
         )
-        % decision_id
-    )
+
+    if kind == "DISTRIBUTE":
+        total = int((pd.get("shape") or {}).get("totalToDistribute") or 1)
+        return _json.dumps(
+            {
+                "type": "DistributionResponse",
+                "decisionId": decision_id,
+                "distribution": {_first_distribution_id(): total},
+            }
+        )
+
+    if kind in {"SELECT_CARDS", "SEARCH_LIBRARY"}:
+        shape = pd.get("shape") or {}
+        n = max(1, int(shape.get("minSelections") or 1))
+        return _json.dumps(
+            {
+                "type": "CardsSelectedResponse",
+                "decisionId": decision_id,
+                "selectedCards": _first_n_option_ids(n),
+            }
+        )
+
+    if kind in {"ORDER_OBJECTS", "REORDER_LIBRARY"}:
+        n = max(2, len(pd.get("options") or []))
+        return _json.dumps(
+            {
+                "type": "OrderedResponse",
+                "decisionId": decision_id,
+                "orderedObjects": _first_n_option_ids(n),
+            }
+        )
+
+    if kind == "CHOOSE_MODE":
+        modes = [m.get("index", 0) for m in (pd.get("modes") or []) if m.get("available", True)]
+        return _json.dumps(
+            {
+                "type": "ModesChosenResponse",
+                "decisionId": decision_id,
+                "selectedModes": modes[:1] or [0],
+            }
+        )
+
+    if kind == "BUDGET_MODAL":
+        return _json.dumps(
+            {"type": "BudgetModalResponse", "decisionId": decision_id, "selectedModeIndices": [0]}
+        )
+
+    if kind == "ASSIGN_DAMAGE":
+        return _json.dumps(
+            {
+                "type": "DamageAssignmentResponse",
+                "decisionId": decision_id,
+                "assignments": {_first_distribution_id(): 1},
+            }
+        )
+
+    if kind == "SELECT_MANA_SOURCES":
+        return _json.dumps(
+            {"type": "ManaSourcesSelectedResponse", "decisionId": decision_id, "autoPay": True}
+        )
+
+    if kind == "SPLIT_PILES":
+        ids = _first_n_option_ids(2)
+        return _json.dumps(
+            {
+                "type": "PilesSplitResponse",
+                "decisionId": decision_id,
+                "piles": [[ids[0]], [ids[1]]],
+            }
+        )
+
+    return _json.dumps({"type": "<ResponseType>", "decisionId": decision_id})
 
 
 def _is_notable_public_action(action: dict) -> bool:

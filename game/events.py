@@ -11,6 +11,8 @@ from typing import Any
 # rules-engine events live in Argentum's observations).
 REASONING = "reasoning"  # natural language narration spoken by an agent
 THINKING = "thinking"  # internal chain-of-thought from Ollama think= block
+MONOLOGUE = "monologue"  # in-character internal voice; spectators see it, opponent does not
+TABLE_TALK = "table_talk"  # in-character dialogue spoken at the opponent
 TOOL_CALL = "tool_call"  # an agent invoked one of its registered tools
 COMMENTARY = "commentary"  # commentator output for a turn
 ACTION = "action"  # an agent committed to an Argentum legalAction

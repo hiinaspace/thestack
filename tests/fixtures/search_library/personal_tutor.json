@@ -1,0 +1,129 @@
+{
+  "_meta": {
+    "fixture": "personal_tutor",
+    "kind": "SEARCH_LIBRARY",
+    "scenario": "Noct casts Personal Tutor (search library for a sorcery, reveal it, then shuffle and put it on top). Library options narrowed to the sorceries actually in the deck. Board has 4 untapped Islands available next turn.",
+    "expected_response_shape": "CardsSelectedResponse with selectedCards = [<one entityId>] picked from the listed sorceries.",
+    "perspective_player_name": "noct",
+    "deck": "blue_tempo"
+  },
+  "schemaHash": "test-fixture",
+  "perspectivePlayerId": "P-noct",
+  "agentToAct": "P-noct",
+  "turnNumber": 4,
+  "phase": "MAIN",
+  "step": "MAIN_PRECOMBAT",
+  "activePlayerId": "P-noct",
+  "priorityPlayerId": "P-noct",
+  "players": [
+    {
+      "id": "P-noct",
+      "name": "noct",
+      "lifeTotal": 18,
+      "handSize": 1,
+      "librarySize": 48,
+      "graveyardSize": 1,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": true,
+      "isActive": true,
+      "hasPriority": true,
+      "hasLost": false
+    },
+    {
+      "id": "P-aria",
+      "name": "aria",
+      "lifeTotal": 15,
+      "handSize": 2,
+      "librarySize": 46,
+      "graveyardSize": 3,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": false,
+      "isActive": false,
+      "hasPriority": false,
+      "hasLost": false
+    }
+  ],
+  "zones": [
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 5,
+      "cards": [
+        {"entityId": "C-isl-1", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-isl-2", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-isl-3", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-isl-4", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-storm-crow", "cardDefinitionId": "por/Storm Crow", "name": "Storm Crow", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["CREATURE"], "subtypes": ["BIRD"], "colors": ["BLUE"], "keywords": ["FLYING"], "manaCost": "{1}{U}", "manaValue": 2, "oracleText": "Flying", "power": 1, "toughness": 2, "tapped": false, "summoningSick": false}
+      ]
+    },
+    {
+      "ownerId": "P-aria",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 4,
+      "cards": [
+        {"entityId": "C-mtn-1", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-mtn-2", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-mtn-3", "cardDefinitionId": "por/Mountain", "name": "Mountain", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["LAND"], "subtypes": ["MOUNTAIN"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {R}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-goblin-bully", "cardDefinitionId": "por/Goblin Bully", "name": "Goblin Bully", "zone": "Battlefield", "ownerId": "P-aria", "controllerId": "P-aria", "types": ["CREATURE"], "subtypes": ["GOBLIN"], "colors": ["RED"], "keywords": [], "manaCost": "{1}{R}", "manaValue": 2, "oracleText": "Goblin Bully attacks each combat if able.", "power": 2, "toughness": 1, "tapped": true, "summoningSick": false}
+      ]
+    },
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Hand",
+      "hidden": false,
+      "size": 1,
+      "cards": [
+        {"entityId": "H-wind-drake", "cardDefinitionId": "por/Wind Drake", "name": "Wind Drake", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["CREATURE"], "subtypes": ["DRAKE"], "colors": ["BLUE"], "keywords": ["FLYING"], "manaCost": "{2}{U}", "manaValue": 3, "oracleText": "Flying", "power": 2, "toughness": 2}
+      ]
+    },
+    {"ownerId": "P-aria", "zoneType": "Hand", "hidden": true, "size": 2, "cards": []},
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Graveyard",
+      "hidden": false,
+      "size": 1,
+      "cards": [
+        {"entityId": "G-tutor-1", "cardDefinitionId": "por/Personal Tutor", "name": "Personal Tutor", "zone": "Graveyard", "ownerId": "P-noct", "controllerId": null, "types": ["SORCERY"], "subtypes": [], "colors": ["BLUE"], "keywords": [], "manaCost": "{U}", "manaValue": 1, "oracleText": "Search your library for a sorcery card, reveal it, then shuffle and put that card on top of your library.", "power": null, "toughness": null}
+      ]
+    },
+    {"ownerId": "P-aria", "zoneType": "Graveyard", "hidden": false, "size": 3, "cards": []},
+    {"ownerId": "P-noct", "zoneType": "Library", "hidden": true, "size": 48, "cards": []},
+    {"ownerId": "P-aria", "zoneType": "Library", "hidden": true, "size": 46, "cards": []}
+  ],
+  "stack": [
+    {"entityId": "S-tutor-1", "controllerId": "P-noct", "name": "Personal Tutor", "kind": "SPELL", "oracleText": "Search your library for a sorcery card, reveal it, then shuffle and put that card on top of your library.", "targets": []}
+  ],
+  "pendingDecision": {
+    "decisionId": "dec-personal-tutor-1",
+    "kind": "SEARCH_LIBRARY",
+    "playerId": "P-noct",
+    "prompt": "Search your library for a sorcery card.",
+    "sourceEntityId": "S-tutor-1",
+    "sourceName": "Personal Tutor",
+    "effectHint": "Reveal it, then shuffle and put that card on top of your library.",
+    "requiresStructuredResponse": true,
+    "shape": {"minSelections": 0, "maxSelections": 1},
+    "targetRequirements": [],
+    "legalTargets": {},
+    "options": [
+      {"entityId": "L-touch-brilliance", "kind": "CARD", "label": "Touch of Brilliance", "cardInfo": {"name": "Touch of Brilliance", "manaCost": "{3}{U}", "typeLine": "Sorcery", "colors": ["BLUE"]}},
+      {"entityId": "L-time-ebb", "kind": "CARD", "label": "Time Ebb", "cardInfo": {"name": "Time Ebb", "manaCost": "{2}{U}", "typeLine": "Sorcery", "colors": ["BLUE"]}},
+      {"entityId": "L-ancestral-memories", "kind": "CARD", "label": "Ancestral Memories", "cardInfo": {"name": "Ancestral Memories", "manaCost": "{2}{U}{U}{U}", "typeLine": "Sorcery", "colors": ["BLUE"]}}
+    ],
+    "modes": [],
+    "optionTexts": [],
+    "distributionTargets": [],
+    "ordered": false,
+    "canCancel": true,
+    "allowPartial": true,
+    "minPerTarget": 0
+  },
+  "legalActions": [],
+  "terminated": false,
+  "winnerId": null,
+  "stateDigest": "test-fixture-personal-tutor"
+}

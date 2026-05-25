@@ -14,6 +14,8 @@
   --commentary: #86efac;
   --engine: #93c5fd;
   --info: #fca5a5;
+  --monologue: #fbcfe8;
+  --table-talk: #fcd34d;
 }
 
 * {
@@ -630,6 +632,20 @@ main {
 .event.commentary .event-head { color: var(--commentary); }
 .event.commentary .event-body { color: var(--commentary); }
 .event.info .event-head { color: var(--info); }
+.event.monologue .event-head { color: var(--monologue); }
+.event.monologue .event-body {
+  color: var(--monologue);
+  font-style: italic;
+  padding-left: 10px;
+  border-left: 2px solid var(--monologue);
+}
+.event.table_talk .event-head { color: var(--table-talk); }
+.event.table_talk .event-body {
+  color: var(--table-talk);
+  font-weight: 500;
+}
+.event.table_talk .event-body::before { content: "\201C"; }
+.event.table_talk .event-body::after { content: "\201D"; }
 
 .timeline-item {
   position: relative;
@@ -691,6 +707,21 @@ main {
 .timeline-reflection {
   color: var(--reasoning);
 }
+
+.timeline-monologue {
+  color: var(--monologue);
+  font-style: italic;
+  padding-left: 8px;
+  border-left: 2px solid var(--monologue);
+}
+
+.timeline-table_talk {
+  color: var(--table-talk);
+  font-weight: 500;
+}
+
+.timeline-table_talk::before { content: "\201C"; }
+.timeline-table_talk::after { content: "\201D"; }
 
 .timeline-game-over {
   color: var(--info);

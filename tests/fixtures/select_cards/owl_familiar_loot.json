@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "fixture": "owl_familiar_loot",
+    "kind": "SELECT_CARDS",
+    "scenario": "Owl Familiar ETB drew a card; the loot half asks the player to discard exactly one card from a 5-card hand including a stranded Cloud Dragon (5/4 for {5}{U}) and two redundant lands.",
+    "expected_response_shape": "CardsSelectedResponse with selectedCards = [<one entityId>] from options.",
+    "perspective_player_name": "noct",
+    "deck": "blue_tempo"
+  },
+  "schemaHash": "test-fixture",
+  "perspectivePlayerId": "P-noct",
+  "agentToAct": "P-noct",
+  "turnNumber": 3,
+  "phase": "MAIN",
+  "step": "MAIN_PRECOMBAT",
+  "activePlayerId": "P-noct",
+  "priorityPlayerId": "P-noct",
+  "players": [
+    {
+      "id": "P-noct",
+      "name": "noct",
+      "lifeTotal": 20,
+      "handSize": 5,
+      "librarySize": 50,
+      "graveyardSize": 0,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": true,
+      "isActive": true,
+      "hasPriority": true,
+      "hasLost": false
+    },
+    {
+      "id": "P-mira",
+      "name": "mira",
+      "lifeTotal": 20,
+      "handSize": 3,
+      "librarySize": 49,
+      "graveyardSize": 0,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": false,
+      "isActive": false,
+      "hasPriority": false,
+      "hasLost": false
+    }
+  ],
+  "zones": [
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 3,
+      "cards": [
+        {"entityId": "C-isl-1", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-isl-2", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-owl-1", "cardDefinitionId": "por/Owl Familiar", "name": "Owl Familiar", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["CREATURE"], "subtypes": ["BIRD"], "colors": ["BLUE"], "keywords": ["FLYING"], "manaCost": "{1}{U}", "manaValue": 2, "oracleText": "Flying\nWhen Owl Familiar enters, draw a card, then discard a card.", "power": 1, "toughness": 1, "tapped": false, "summoningSick": true}
+      ]
+    },
+    {
+      "ownerId": "P-mira",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 2,
+      "cards": [
+        {"entityId": "C-pl-1", "cardDefinitionId": "por/Plains", "name": "Plains", "zone": "Battlefield", "ownerId": "P-mira", "controllerId": "P-mira", "types": ["LAND"], "subtypes": ["PLAINS"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {W}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-pl-2", "cardDefinitionId": "por/Plains", "name": "Plains", "zone": "Battlefield", "ownerId": "P-mira", "controllerId": "P-mira", "types": ["LAND"], "subtypes": ["PLAINS"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {W}.", "power": null, "toughness": null, "tapped": false}
+      ]
+    },
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Hand",
+      "hidden": false,
+      "size": 5,
+      "cards": [
+        {"entityId": "H-isl-1", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null},
+        {"entityId": "H-isl-2", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null},
+        {"entityId": "H-isl-3", "cardDefinitionId": "por/Island", "name": "Island", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["LAND"], "subtypes": ["ISLAND"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {U}.", "power": null, "toughness": null},
+        {"entityId": "H-cloud-drake", "cardDefinitionId": "por/Wind Drake", "name": "Wind Drake", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["CREATURE"], "subtypes": ["DRAKE"], "colors": ["BLUE"], "keywords": ["FLYING"], "manaCost": "{2}{U}", "manaValue": 3, "oracleText": "Flying", "power": 2, "toughness": 2},
+        {"entityId": "H-cloud-dragon", "cardDefinitionId": "por/Cloud Dragon", "name": "Cloud Dragon", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["CREATURE"], "subtypes": ["DRAGON"], "colors": ["BLUE"], "keywords": ["FLYING"], "manaCost": "{5}{U}", "manaValue": 6, "oracleText": "Flying", "power": 5, "toughness": 4}
+      ]
+    },
+    {"ownerId": "P-mira", "zoneType": "Hand", "hidden": true, "size": 3, "cards": []},
+    {"ownerId": "P-noct", "zoneType": "Graveyard", "hidden": false, "size": 0, "cards": []},
+    {"ownerId": "P-mira", "zoneType": "Graveyard", "hidden": false, "size": 0, "cards": []},
+    {"ownerId": "P-noct", "zoneType": "Library", "hidden": true, "size": 50, "cards": []},
+    {"ownerId": "P-mira", "zoneType": "Library", "hidden": true, "size": 49, "cards": []}
+  ],
+  "stack": [],
+  "pendingDecision": {
+    "decisionId": "dec-owl-loot-1",
+    "kind": "SELECT_CARDS",
+    "playerId": "P-noct",
+    "prompt": "Discard a card.",
+    "sourceEntityId": "C-owl-1",
+    "sourceName": "Owl Familiar",
+    "effectHint": "When Owl Familiar enters, draw a card, then discard a card.",
+    "requiresStructuredResponse": true,
+    "shape": {"minSelections": 1, "maxSelections": 1},
+    "targetRequirements": [],
+    "legalTargets": {},
+    "options": [
+      {"entityId": "H-isl-1", "kind": "CARD", "label": "Island", "cardInfo": {"name": "Island", "manaCost": "", "typeLine": "Basic Land - Island", "colors": []}},
+      {"entityId": "H-isl-2", "kind": "CARD", "label": "Island", "cardInfo": {"name": "Island", "manaCost": "", "typeLine": "Basic Land - Island", "colors": []}},
+      {"entityId": "H-isl-3", "kind": "CARD", "label": "Island", "cardInfo": {"name": "Island", "manaCost": "", "typeLine": "Basic Land - Island", "colors": []}},
+      {"entityId": "H-cloud-drake", "kind": "CARD", "label": "Wind Drake", "cardInfo": {"name": "Wind Drake", "manaCost": "{2}{U}", "typeLine": "Creature - Drake", "colors": ["BLUE"]}},
+      {"entityId": "H-cloud-dragon", "kind": "CARD", "label": "Cloud Dragon", "cardInfo": {"name": "Cloud Dragon", "manaCost": "{5}{U}", "typeLine": "Creature - Dragon", "colors": ["BLUE"]}}
+    ],
+    "modes": [],
+    "optionTexts": [],
+    "distributionTargets": [],
+    "ordered": false,
+    "canCancel": false,
+    "allowPartial": false,
+    "minPerTarget": 0
+  },
+  "legalActions": [],
+  "terminated": false,
+  "winnerId": null,
+  "stateDigest": "test-fixture-owl-select-cards"
+}

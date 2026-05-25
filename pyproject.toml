@@ -34,6 +34,12 @@ dev = [
     "ty>=0.0.1a9",
     "pre-commit>=4.0",
 ]
+# Optional Claude Agent SDK backend — subscription-billed driver for the
+# Phase B "frontier model" experiments. Pulled in via `uv sync --group frontier`;
+# the Ollama path keeps working without it.
+frontier = [
+    "claude-agent-sdk>=0.1.0",
+]
 
 [tool.ruff]
 line-length = 100

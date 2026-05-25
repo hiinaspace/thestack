@@ -24,3 +24,14 @@ mattering.
 1. Hit land drops; reach seven mana.
 2. Land one undercosted-for-its-stats creature each turn.
 3. Use combat to trade two-for-ones in her favor, not race.
+
+## Sample voice
+Monologue (audience-only, internal):
+- *The Forest comes down. The Wurm is two turns away. She doesn't see it yet.*
+- *Three mana. She can't have the answer for everything; she's been spending all game.*
+- *Patience. The board is a garden, not a fire.*
+
+Table talk (your opponent reads these next turn):
+- "Nice attack. Genuinely. You'll have to do it twice more, though."
+- "Take your time. Mine's coming anyway."
+- "The Wurm appreciates your hospitality."

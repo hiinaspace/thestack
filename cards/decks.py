@@ -61,6 +61,43 @@ DECKS: dict[str, dict[str, int]] = {
         "Summer Bloom": 4,  # play up to 3 extra lands this turn for {1}{G}
         "Monstrous Growth": 4,  # target creature gets +4/+4 for {1}{G}
     },
+    # Adds stack interaction (counterspell), ETB triggers with targeting,
+    # bounce, card draw, and a sorcery tutor on top of the basic creature
+    # game. Stresses the harness's structured-decision path far more than
+    # the four base decks do.
+    "blue_tempo": {
+        "Island": 24,
+        "Cloud Pirates": 3,  # 1/1 flying for {U}
+        "Storm Crow": 3,  # 1/2 flying for {1}{U}
+        "Owl Familiar": 2,  # 1/1 flying, ETB loot for {1}{U}
+        "Wind Drake": 4,  # 2/2 flying for {2}{U}
+        "Man-o'-War": 4,  # 2/2, ETB bounce target creature for {2}{U}
+        "Cloud Spirit": 2,  # 3/1 flying for {2}{U}
+        "Snapping Drake": 3,  # 3/2 flying for {3}{U}
+        "Cloud Dragon": 2,  # 5/4 flying for {5}{U}
+        "Mystic Denial": 4,  # counter creature/sorcery spell for {1}{U}{U}
+        "Command of Unsummoning": 3,  # bounce-creature instant for {2}{U}
+        "Time Ebb": 2,  # put target creature on top of library for {2}{U}
+        "Touch of Brilliance": 2,  # draw 2 for {3}{U}
+        "Ancestral Memories": 1,  # look at top of library and keep for {2}{U}{U}{U}
+        "Personal Tutor": 1,  # tutor a sorcery (SearchLibrary decision) for {U}
+    },
+    # Red with X-cost burn and divided damage on top of the standard rush
+    # creatures. Exercises the X-cost shape and the DISTRIBUTE structured
+    # decision (Forked Lightning splits 4 damage across 1-3 targets).
+    "red_bolt": {
+        "Mountain": 24,
+        "Raging Goblin": 4,  # 1/1 haste for {R}
+        "Goblin Bully": 4,  # 2/1 for {1}{R}
+        "Hulking Goblin": 3,  # 2/2 can't block for {1}{R}
+        "Minotaur Warrior": 4,  # 2/3 for {2}{R}
+        "Raging Minotaur": 4,  # 2/2 for {2}{R}
+        "Scorching Spear": 3,  # 1 damage any target for {R}
+        "Volcanic Hammer": 4,  # 3 damage to any target for {1}{R}
+        "Forked Lightning": 4,  # distribute 4 damage among 1-3 creatures for {3}{R}
+        "Blaze": 3,  # X damage to any target for {X}{R}
+        "Lava Axe": 3,  # 5 damage to a player for {4}{R}
+    },
 }
 
 DECK_NAMES = list(DECKS.keys())
@@ -70,3 +107,19 @@ def get_deck(name: str) -> dict[str, int]:
     if name not in DECKS:
         raise ValueError(f"Unknown deck '{name}'. Available: {DECK_NAMES}")
     return DECKS[name]
+
+
+# Each persona's identity is written around one mono-color archetype; pair
+# them with the matching deck unless the CLI explicitly overrides. Keeps
+# Aria red and Bryn green when you swap personas without remembering to also
+# pass --deck-a / --deck-b.
+PERSONA_DEFAULT_DECK: dict[str, str] = {
+    "aria": "red_rush",
+    "bryn": "green_might",
+    "mira": "white_aegis",
+    "noct": "black_attrition",
+}
+
+
+def default_deck_for(persona_name: str) -> str | None:
+    return PERSONA_DEFAULT_DECK.get(persona_name)

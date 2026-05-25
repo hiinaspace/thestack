@@ -23,6 +23,11 @@ class Toolbox:
     chosen_action_id: int | None = None
     chosen_decision_response: dict[str, Any] | None = None
     chosen_reasoning: str = ""
+    # Per-turn voice channels. Drained into the action_record when submit_action
+    # lands so the bounded public_action_history can quote them on the
+    # opponent's next decision.
+    turn_monologues: list[str] = field(default_factory=list)
+    turn_table_talk: list[str] = field(default_factory=list)
     # Provided fresh each turn by PlayerAgent.choose_action
     _valid_action_ids: set[int] = field(default_factory=set)
     _valid_decision_id: str | None = None
@@ -38,6 +43,20 @@ class Toolbox:
             return "No notes yet."
         numbered = "\n".join(f"{i + 1}. {n}" for i, n in enumerate(self.scratchpad))
         return f"Your strategy notes so far:\n{numbered}"
+
+    def monologue(self, text: str) -> str:
+        stripped = text.strip()
+        if not stripped:
+            return "ERROR: monologue text was empty."
+        self.turn_monologues.append(stripped)
+        return "Monologue logged (audience hears it; your opponent does not)."
+
+    def table_talk(self, text: str) -> str:
+        stripped = text.strip()
+        if not stripped:
+            return "ERROR: table_talk text was empty."
+        self.turn_table_talk.append(stripped)
+        return "Table talk logged; your opponent will read this at the start of their next turn."
 
     def submit_action(self, action_id: int, reasoning: str) -> str:
         if action_id not in self._valid_action_ids:
@@ -76,6 +95,8 @@ class Toolbox:
         self.chosen_action_id = None
         self.chosen_decision_response = None
         self.chosen_reasoning = ""
+        self.turn_monologues = []
+        self.turn_table_talk = []
         self._valid_action_ids = valid_action_ids
         self._valid_decision_id = valid_decision_id
 
@@ -94,8 +115,18 @@ class Toolbox:
 _DISPATCH: dict[str, Callable[..., str]] = {
     "take_note": lambda tb, note: tb.take_note(note),
     "recall_strategy": lambda tb: tb.recall_strategy(),
+    "monologue": lambda tb, text: tb.monologue(text),
+    "table_talk": lambda tb, text: tb.table_talk(text),
     "submit_action": lambda tb, action_id, reasoning: tb.submit_action(action_id, reasoning),
     "submit_decision": lambda tb, response, reasoning: tb.submit_decision(response, reasoning),
+}
+
+# Tools whose call is itself a voice event; the Agent loop emits MONOLOGUE /
+# TABLE_TALK in place of a generic TOOL_CALL so the viewer can render them
+# as dialogue rather than mechanical book-keeping.
+VOICE_TOOLS: dict[str, str] = {
+    "monologue": "monologue",
+    "table_talk": "table_talk",
 }
 
 
@@ -129,6 +160,53 @@ TOOL_SCHEMAS: list[dict] = [
             "name": "recall_strategy",
             "description": "Return all strategy notes you've saved so far this game.",
             "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "monologue",
+            "description": (
+                "Speak an in-character internal-monologue line. The spectator "
+                "transcript shows it; your opponent does NOT read it. Use to "
+                "set up bluffs, react in voice to your opponent's table talk, "
+                "or build tension before a big play. May be called multiple "
+                "times before submit_action. Keep each line short — one or "
+                "two sentences."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "The monologue line, in your persona's voice.",
+                    }
+                },
+                "required": ["text"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "table_talk",
+            "description": (
+                "Speak an in-character line AT your opponent. Your opponent's "
+                "agent will read these lines at the start of their next "
+                "decision, so they are part of the conversation. Use sparingly; "
+                "one pointed line beats a paragraph. May be called multiple "
+                "times before submit_action."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "description": "What you say to your opponent, in your persona's voice.",
+                    }
+                },
+                "required": ["text"],
+            },
         },
     },
     {
