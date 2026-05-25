@@ -12,6 +12,33 @@ decisions.
 
 from __future__ import annotations
 
+# Steps where the engine's stateDigest is known to be invariant across
+# legitimate player commitments — declaring blockers/attackers stages the
+# action without changing the digest, and combat damage resolves between
+# observations. Using digest equality to infer "no progress" inside these
+# steps produces a false positive that then bait the no_progress fallback
+# into overwriting the player's choice with "No blocks" / "Skip combat".
+# Observed in games/haiku-vs-e4b-002 T12, seq 2116-2125: three identical
+# digests across two distinct submissions.
+_DIGEST_UNRELIABLE_STEPS = frozenset(
+    {
+        "DECLARE_BLOCKERS",
+        "DECLARE_ATTACKERS",
+        "COMBAT_DAMAGE",
+    }
+)
+
+
+def should_track_no_progress(obs: dict) -> bool:
+    """True iff stateDigest equality is a reliable no-progress signal here.
+
+    Returns False during combat-declaration steps where the digest does not
+    incorporate the staged blocker/attacker assignment, so an unchanged
+    digest after a real submission would be a false positive.
+    """
+    step = (obs.get("step") or "").upper()
+    return step not in _DIGEST_UNRELIABLE_STEPS
+
 
 def autopass_action_id(obs: dict) -> tuple[int, str] | None:
     """If this observation is structurally a Pass, return (action_id, reason).

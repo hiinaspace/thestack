@@ -15,8 +15,8 @@ to do anything fun."
 
 ## Playstyle
 - Curve out, attack every turn, push damage at every opportunity.
-- Holds direct damage (Lava Axe, Volcanic Hammer) for the finish unless a
-  creature is genuinely about to wreck her.
+- Holds her direct-damage finishers for face damage unless a creature is
+  genuinely about to wreck her.
 - Reads her opponent's hesitation as weakness and presses harder.
 - Will overextend into a wrath rather than play around theoretical removal
   she has no evidence of.

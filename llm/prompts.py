@@ -65,31 +65,52 @@ Your submit_action `reasoning` argument is the action declaration spectators
 see (e.g. "I burn for five. Lava Axe."). Keep it short and in voice.
 
 Tools:
-  - take_note(note)        save a strategic note to your scratchpad (persists)
+  - take_note(note)        save a cross-turn strategic note (persists all game)
   - recall_strategy()      retrieve every note you've saved so far
   - monologue(text)        speak an internal-voice line (spectators only)
   - table_talk(text)       say a line to your opponent (they will read it)
+  - set_turn_plan(intent, action_sequence, notes)
+                            commit your plan for THIS turn (call once per turn)
+  - update_turn_plan(revised_intent, reason)
+                            revise the plan mid-turn after something changed
   - submit_action(id, why) commit to a legal action and end this decision
   - submit_decision(response, why)
                             commit a structured DecisionResponse when asked
 
-Workflow each decision:
-  1. Read the game state and legal actions. Read any table_talk your opponent
-     just said and decide whether to respond.
-  2. Call monologue() to set the scene in your inner voice, and — when the
-     moment warrants — call table_talk() to speak to your opponent. These are
-     where the entertainment lives; do not skip them on important turns.
-  3. Call submit_action (or submit_decision) exactly once to commit.
-  4. The reasoning text on submit_action is your spoken action declaration
-     ("I burn for five. Lava Axe."). Keep it short.
+Turn plan workflow — think upfront, execute terse:
+  - On your FIRST decision of a turn, call set_turn_plan with a one-sentence
+    intent ("play Mountain, cast Raging Cougar, attack with everything"). The
+    plan is shown at the top of every subsequent prompt this turn.
+  - On subsequent decisions, EXECUTE the next step of the plan without
+    re-deriving it. Keep monologue and reasoning tight — the plan is the
+    thinking; the action is the execution.
+  - If something material changes (opponent plays a surprise, you draw a key
+    card off a tutor, post-combat board shift), call update_turn_plan with
+    the new intent + reason, then continue.
+  - At turn boundaries the plan clears automatically; commit a fresh one.
 
-You can emit several tool calls in a single response — chain them. A normal
-turn looks like:
-    monologue("She blocked with the Pegasus. Cute.") → \
-    table_talk("Hold that block. I'll keep coming.") → \
-    submit_action(7, "Attack with everything.")
-A dull turn (drawing a land, passing in upkeep) needs no voice; just
-submit_action.
+Per-decision workflow:
+  1. Read the game state and legal actions. If your opponent just spoke,
+     decide whether to respond with table_talk.
+  2. If no turn plan is set, this is your first decision of the turn — call
+     set_turn_plan after a brief monologue setting the scene.
+  3. If a plan IS set, execute the next step. Call monologue only if the
+     moment warrants flavor (a draw paid off, opponent blocked surprisingly,
+     a finisher lands). Routine plays (drop a land, pass priority on opp's
+     upkeep) need no voice.
+  4. Call submit_action (or submit_decision) exactly once to commit. The
+     reasoning text is your spoken action declaration ("I burn for five.
+     Lava Axe."). Keep it short.
+
+You can emit several tool calls in a single response — chain them. A first
+decision of a turn:
+    monologue("Mountain, Cougar, swing. They die.") → \
+    set_turn_plan("ramp + attack", ["play Mountain", "cast Raging Cougar", \
+        "attack with all"], "Bryn at 5, lethal in two turns.") → \
+    submit_action(3, "Mountain down.")
+A follow-up decision the same turn:
+    submit_action(7, "Cougar.")
+A dull turn (passing in upkeep, opponent's main phase): submit_action only.
 
 Rules of the game:
   - Every action in the list is legal RIGHT NOW; the engine validates.
@@ -593,6 +614,115 @@ def format_legal_actions(
         if target_note:
             suffix += f" [{target_note}]"
         lines.append(f"  {action_id}: {desc}{suffix}")
+    return "\n".join(lines)
+
+
+def _summarize_react_events(engine_events: list[dict] | None) -> str:
+    """Compact one-line-each summary of engine events for a react prompt."""
+    if not engine_events:
+        return "(no engine events to summarize)"
+    keep = {
+        "CardsDrawn",
+        "DamageDealt",
+        "LifeChanged",
+        "CreatureDestroyed",
+        "PlayerLost",
+        "GameEnded",
+    }
+    lines = []
+    for ev in engine_events:
+        t = ev.get("type")
+        if t in keep:
+            text = ev.get("text", "")
+            lines.append(f"  - {t}: {text}" if text else f"  - {t}")
+    return "\n".join(lines) if lines else "(no narratively-significant events)"
+
+
+def format_react_prompt(
+    obs: dict,
+    player_name: str,
+    trigger: str,
+    engine_events: list[dict] | None,
+    turn_plan: dict | None,
+) -> str:
+    """Build the user message for a react() hook (draw or post-combat).
+
+    React prompts are narration-first: the LLM is told there is NO priority
+    decision to commit, only a beat to deliver. Available tools are
+    monologue, table_talk, take_note, set_turn_plan, update_turn_plan. The
+    SDK / Ollama loops are expected to be called with ``wait_for_commit=False``
+    so they exit cleanly when the model stops calling tools.
+    """
+    if trigger == "draw":
+        framing = (
+            "DRAW REACTION — you just drew this turn's card(s). This is both "
+            "a narrative beat AND your tactical pivot: the new information "
+            "shapes the turn. Deliver one in-character monologue() line "
+            "reacting to what you drew (cartoon-energy: 'finally, the card I "
+            "needed!' or 'great, a Mountain, again'), then call set_turn_plan "
+            "with your committed intent for the turn. table_talk is optional "
+            "and rare here. NO submit_action — there is no priority decision "
+            "right now."
+        )
+    elif trigger == "combat_resolution":
+        framing = (
+            "POST-COMBAT REACTION — combat just resolved. This is the "
+            "climax beat of the turn even when nothing died: a duelist saves "
+            "the smirk or the 'argh' for the moment of impact. Deliver one "
+            "monologue() line reacting in voice (you may know what was "
+            "coming, but you've been HOLDING the reaction for this moment), "
+            "and one table_talk() line at your opponent if the moment "
+            "warrants a quip. If the board materially shifted, call "
+            "update_turn_plan with the new intent. NO submit_action — there "
+            "is no priority decision right now."
+        )
+    else:
+        framing = f"REACTION — trigger={trigger}. Deliver one beat in voice."
+
+    parts = [
+        framing,
+        "",
+        "What just happened in the engine:",
+        _summarize_react_events(engine_events),
+        "",
+        format_turn_plan(turn_plan),
+    ]
+    return "\n".join(parts)
+
+
+def format_turn_plan(plan: dict | None) -> str:
+    """Render the turn plan for inclusion at the top of a choose_action prompt.
+
+    Returns a no-plan-yet directive when ``plan`` is None — that branch is
+    deliberately short, since it appears on the player's first decision of
+    every turn. Returns a structured block (intent + sequence + notes +
+    revisions) once the plan is set, so subsequent decisions can execute
+    without re-deriving.
+    """
+    if not plan:
+        return (
+            "TURN PLAN: not committed yet. Set one with set_turn_plan(intent, "
+            "action_sequence, notes) before you submit your first action this "
+            "turn — it will surface here on every subsequent decision."
+        )
+    lines = ["TURN PLAN (committed earlier this turn — execute against it):"]
+    lines.append(f"  Intent: {plan.get('intent', '')}")
+    seq = plan.get("action_sequence") or []
+    if seq:
+        joined = " → ".join(seq)
+        lines.append(f"  Sequence: {joined}")
+    notes = plan.get("notes")
+    if notes:
+        lines.append(f"  Notes: {notes}")
+    revisions = plan.get("revisions") or []
+    if revisions:
+        lines.append("  Revisions:")
+        for r in revisions:
+            lines.append(f"    - {r.get('reason', '')} → {r.get('to', '')}")
+    lines.append(
+        "Execute the next step. Skip monologue on routine plays; revise with "
+        "update_turn_plan only if something material changed."
+    )
     return "\n".join(lines)
 
 

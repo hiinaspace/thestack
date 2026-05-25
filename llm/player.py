@@ -23,8 +23,10 @@ from llm.prompts import (
     format_legal_actions,
     format_mulligan_evaluator,
     format_observation,
+    format_react_prompt,
     format_recent_public_actions,
     format_structured_decision,
+    format_turn_plan,
 )
 from llm.tools import Toolbox
 
@@ -76,18 +78,16 @@ class PlayerAgent:
         self.toolbox.reset_turn(valid_ids)
 
         user_msg = (
+            f"{format_turn_plan(self.toolbox.turn_plan)}\n\n"
             f"{format_observation(obs, self.name)}\n\n"
             f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
             f"{format_combat_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_mulligan_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_legal_actions(legal_actions, obs, self.name)}\n\n"
-            "Stay in voice. Before you commit to the action, set the scene "
-            "with one quick monologue() line for the audience and, if your "
-            "opponent's last move begged for a response, one table_talk() "
-            "line aimed at them. Then choose a numbered legal action and "
-            "call submit_action. Multiple tool calls in this single response "
-            "are fine — chain monologue → (optional) table_talk → "
-            "submit_action."
+            "If no turn plan is committed yet, set one before submit_action. "
+            "If one is committed, execute the next step — keep voice tight "
+            "unless something material changed (call update_turn_plan if it "
+            "did). Chain tool calls in this single response."
         )
 
         response = self.agent.run(user_msg, verbose=verbose)
@@ -114,6 +114,43 @@ class PlayerAgent:
             },
         )
         return action_id
+
+    def react(
+        self,
+        obs: dict,
+        trigger: str,
+        engine_events: list[dict] | None,
+        verbose: bool = False,
+    ) -> None:
+        """Run a narration-only LLM pass for draw / post-combat hooks.
+
+        Emits MONOLOGUE / TABLE_TALK events through the standard tool
+        dispatcher (per [[feedback-no-new-event-types]]) and a thin ACTION
+        record tagged as a reaction so the public_action_history surfaces it
+        to the opponent's next decision. No submit_action expected.
+        """
+        user_msg = format_react_prompt(
+            obs, self.name, trigger, engine_events, self.toolbox.turn_plan
+        )
+        self.agent.run(user_msg, verbose=verbose, max_iterations=2, wait_for_commit=False)
+        monologues = list(self.toolbox.turn_monologues)
+        table_talk = list(self.toolbox.turn_table_talk)
+        # Drain so the next real action's record doesn't double-attach them.
+        self.toolbox.turn_monologues = []
+        self.toolbox.turn_table_talk = []
+        if monologues or table_talk:
+            self.event_log.append(
+                ACTION,
+                {
+                    "player": self.name,
+                    "action_id": None,
+                    "description": f"(reaction: {trigger})",
+                    "reasoning": "",
+                    "monologues": monologues,
+                    "table_talk": table_talk,
+                    "reaction_trigger": trigger,
+                },
+            )
 
     def choose_decision(
         self,

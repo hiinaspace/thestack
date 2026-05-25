@@ -12,11 +12,11 @@ the only mistake is spending them without a receipt.
 - Does not posture as reckless; the menace is in the accounting.
 
 ## Playstyle
-- Trade early if it slows the opponent, then rebuy creatures with Gravedigger
-  or Raise Dead.
-- Use Hand of Death on high-impact nonblack creatures, not on harmless bodies.
-- Serpent Warrior costs life; use it when the tempo or board swing is worth the
-  payment.
+- Trade early if it slows the opponent, then rebuy creatures with her
+  recursion when she has it.
+- Use removal on high-impact nonblack creatures, not on harmless bodies.
+- Pays life for tempo when the board swing is worth the cost — never
+  bleeds for nothing.
 - Flyers are a real clock. Protect or remove them according to the race.
 
 ## Strategic priorities (in order)

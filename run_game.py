@@ -9,7 +9,7 @@ from pathlib import Path
 from cards.decks import DECK_NAMES, default_deck_for, get_deck
 from game.events import ACTION, AUTOPASS, ENGINE_EVENT, GAME_OVER, OBSERVATION, EventLog
 from llm import argentum
-from llm.autopass import autopass_action_id
+from llm.autopass import autopass_action_id, should_track_no_progress
 from llm.client import DEFAULT_MODEL, make_client
 from llm.commentator import CommentatorAgent
 from llm.meta import reflect_after_game, write_pre_game_strategy
@@ -28,6 +28,10 @@ def run_game(
     game_id: str,
     verbose: bool,
     random_agents: bool = False,
+    persona_a_backend: str = "ollama",
+    persona_b_backend: str = "ollama",
+    persona_a_model: str | None = None,
+    persona_b_model: str | None = None,
 ) -> None:
     persona_a = Persona(persona_a_name)
     persona_b = Persona(persona_b_name)
@@ -41,7 +45,12 @@ def run_game(
 
     print(f"Starting game {game_id}")
     print(f"  {persona_a.name} ({deck_a_name}) vs {persona_b.name} ({deck_b_name})")
-    mode = "random" if random_agents else f"LLM ({model})"
+    if random_agents:
+        mode = "random"
+    else:
+        a_label = f"{persona_a_backend}:{persona_a_model or model}"
+        b_label = f"{persona_b_backend}:{persona_b_model or model}"
+        mode = f"LLM ({persona_a.name}={a_label} / {persona_b.name}={b_label})"
     print(f"  Mode: {mode} | Max steps: {max_steps}")
     print(f"  Log: {log_path}\n")
 
@@ -52,6 +61,7 @@ def run_game(
 
     client = None if random_agents else make_client()
     commentator = None
+    sdk_agents: list = []  # Track ClaudePlayerAgents for explicit close() at game end
 
     if random_agents:
         agents: dict[str, object] = {
@@ -65,6 +75,9 @@ def run_game(
         persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
 
         # Pre-game strategy session for each persona. Writes to strategy.md.
+        # Strategist + commentator + reflector stay on Ollama regardless of
+        # the player backend — they're auxiliary voices that the player
+        # backend choice shouldn't change.
         if verbose:
             print(f"  [pre-game] {persona_a.name} planning strategy...")
         write_pre_game_strategy(
@@ -93,14 +106,34 @@ def run_game(
         persona_a.snapshot_to(game_dir / "personas" / persona_a.name)
         persona_b.snapshot_to(game_dir / "personas" / persona_b.name)
 
-        agents = {
-            persona_a.name: PlayerAgent(
-                persona_a, persona_b.name, model, client, event_log, deck=deck_a
-            ),
-            persona_b.name: PlayerAgent(
-                persona_b, persona_a.name, model, client, event_log, deck=deck_b
-            ),
-        }
+        agents = {}
+        for persona, opponent_name, deck, backend, model_override in (
+            (persona_a, persona_b.name, deck_a, persona_a_backend, persona_a_model),
+            (persona_b, persona_a.name, deck_b, persona_b_backend, persona_b_model),
+        ):
+            agent_model = model_override or model
+            if backend == "anthropic_sdk":
+                from llm.claude_agent_sdk_backend import ClaudePlayerAgent
+
+                agent = ClaudePlayerAgent(
+                    persona,
+                    opponent_name,
+                    agent_model,
+                    event_log,
+                    deck=deck,
+                    verbose=verbose,
+                )
+                sdk_agents.append(agent)
+            elif backend == "ollama":
+                agent = PlayerAgent(
+                    persona, opponent_name, agent_model, client, event_log, deck=deck
+                )
+            else:
+                raise ValueError(
+                    f"Unknown backend {backend!r} for {persona.name}; "
+                    "expected 'ollama' or 'anthropic_sdk'."
+                )
+            agents[persona.name] = agent
         commentator = CommentatorAgent(client, event_log, model=model)
 
     env_id, obs = argentum.create_env(
@@ -119,6 +152,7 @@ def run_game(
         print(f"Going first: {going_first}\n")
 
     current_turn = obs.get("turnNumber", 0)
+    all_player_names: list[str] = [p["name"] for p in obs.get("players", [])]
     step_count = 0
     stop_reason = "step_limit"
     winner_name: str | None = None
@@ -129,6 +163,13 @@ def run_game(
     # If an action returns the exact same state digest, force a safe "done"
     # action on the repeat rather than paying for another identical LLM choice.
     no_progress_positions: set[tuple[str, str]] = set()
+    # Pending react hooks — populated by engine_events from advance(), drained
+    # when the relevant player's next decision-or-autopass moment comes up.
+    # Draws are per-player (mapping name → CardsDrawn event); combat reactions
+    # fire on both players in priority order after COMBAT_DAMAGE resolves.
+    pending_draw_react: dict[str, dict] = {}
+    pending_combat_react_for: set[str] = set()
+    combat_react_events: list[dict] = []
     interrupted = False
 
     try:
@@ -159,6 +200,12 @@ def run_game(
                     )
                 turn_actions = []
                 current_turn = new_turn
+                # Clear per-turn state (turn_plan) on every agent's toolbox so
+                # each player starts the new turn without a stale plan.
+                for ag in agents.values():
+                    tb = getattr(ag, "toolbox", None)
+                    if tb is not None and hasattr(tb, "reset_for_new_turn"):
+                        tb.reset_for_new_turn()
                 if verbose:
                     lives = {p["name"]: p["lifeTotal"] for p in obs["players"]}
                     print(f"\n{'=' * 60}")
@@ -168,6 +215,40 @@ def run_game(
             if agent is None:
                 stop_reason = "unknown_acting_player"
                 break
+
+            # ---- React hooks (draw + post-combat) ----------------------------
+            # Fire BEFORE autopass/choose_action so the LLM gets the beat even
+            # when the immediate next decision would otherwise be autopassed.
+            # No new event types — react emits MONOLOGUE / TABLE_TALK via the
+            # standard tool dispatcher and an ACTION row tagged as a reaction.
+            if hasattr(agent, "react"):
+                # Draw reaction: fires once per turn when the acting player
+                # first reaches the main phase after their DRAW step. Skipped
+                # on turn 1 (mulligan dominates that headspace).
+                if acting_name in pending_draw_react and str(step_name).upper() == "PRECOMBAT_MAIN":
+                    draw_event = pending_draw_react.pop(acting_name)
+                    if current_turn > 1:
+                        try:
+                            agent.react(obs, "draw", [draw_event], verbose=verbose)
+                        except Exception as e:
+                            print(f"  [warn] {acting_name} draw react failed: {e}")
+                # Combat reaction: fires once per combat for each player as
+                # their priority window arrives after COMBAT_DAMAGE resolved.
+                # Runs even on whiffs (no damage, no kills) per the cartoon
+                # quip pattern — see plan deep-honking-gadget.
+                if (
+                    acting_name in pending_combat_react_for
+                    and str(step_name).upper() != "COMBAT_DAMAGE"
+                ):
+                    pending_combat_react_for.discard(acting_name)
+                    try:
+                        agent.react(
+                            obs, "combat_resolution", list(combat_react_events), verbose=verbose
+                        )
+                    except Exception as e:
+                        print(f"  [warn] {acting_name} combat react failed: {e}")
+                    if not pending_combat_react_for:
+                        combat_react_events = []
 
             legal_actions = obs.get("legalActions", [])
             pending_decision = obs.get("pendingDecision") or {}
@@ -222,6 +303,14 @@ def run_game(
                                 "player": acting_name,
                                 "events": engine_events,
                             },
+                        )
+                        _capture_react_triggers(
+                            engine_events,
+                            player_names_by_id,
+                            all_player_names,
+                            pending_draw_react,
+                            pending_combat_react_for,
+                            combat_react_events,
                         )
                     turn_actions.append(action_record)
                     public_action_history.append(action_record)
@@ -318,6 +407,14 @@ def run_game(
                         ENGINE_EVENT,
                         {"action_id": action_id, "player": acting_name, "events": engine_events},
                     )
+                    _capture_react_triggers(
+                        engine_events,
+                        player_names_by_id,
+                        all_player_names,
+                        pending_draw_react,
+                        pending_combat_react_for,
+                        combat_react_events,
+                    )
                 turn_actions.append(action_record)
                 public_action_history.append(action_record)
                 public_action_history = public_action_history[-48:]
@@ -325,6 +422,7 @@ def run_game(
                     previous_digest
                     and obs.get("stateDigest") == previous_digest
                     and not obs.get("terminated")
+                    and should_track_no_progress(obs)
                 ):
                     no_progress_positions.add((str(previous_digest), acting_name))
             except Exception as e:
@@ -390,8 +488,59 @@ def run_game(
                     verbose=verbose,
                 )
 
+        for sdk_agent in sdk_agents:
+            try:
+                sdk_agent.close()
+            except Exception as e:
+                print(f"  [warn] SDK agent close failed: {e}")
+
         event_log.close()
         argentum.dispose(env_id)
+
+
+def _capture_react_triggers(
+    engine_events: list[dict],
+    player_names_by_id: dict[str, str],
+    all_player_names: list[str],
+    pending_draw_react: dict[str, dict],
+    pending_combat_react_for: set[str],
+    combat_react_events: list[dict],
+) -> None:
+    """Scan engine_events for react-hook triggers; mutate pending state.
+
+    - CardsDrawn → register pending draw react for the drawing player.
+    - DamageDealt / LifeChanged / CreatureDestroyed / PlayerLost → register
+      pending combat react for BOTH players (each fires when their priority
+      window arrives after COMBAT_DAMAGE resolves).
+
+    Caller owns the mutable containers; this function appends/mutates in
+    place to keep the call sites at run_game.py's advance() hooks terse.
+    """
+    # Combat-damage events (DamageDealt / LifeChanged / CreatureDestroyed)
+    # also fire for non-combat spells (Lava Axe, Vampiric Touch, Pyroclasm).
+    # Distinguish by anchoring on the COMBAT_DAMAGE step transition that
+    # always precedes real combat resolution in the same engine_events batch.
+    combat_step_entered = any(
+        ev.get("type") == "StepChanged" and "COMBAT_DAMAGE" in str(ev.get("text", ""))
+        for ev in engine_events
+    )
+    for ev in engine_events:
+        et = ev.get("type")
+        if et == "CardsDrawn":
+            for pid in ev.get("playerIds") or []:
+                pname = player_names_by_id.get(pid)
+                if pname:
+                    pending_draw_react[pname] = ev
+        elif combat_step_entered and et in {
+            "DamageDealt",
+            "LifeChanged",
+            "CreatureDestroyed",
+            "PlayerLost",
+        }:
+            combat_react_events.append(ev)
+    if combat_step_entered:
+        for name in all_player_names:
+            pending_combat_react_for.add(name)
 
 
 def no_progress_fallback_action_id(
@@ -436,7 +585,29 @@ def main() -> None:
         choices=DECK_NAMES,
         help="override deck for persona-b (defaults to the persona's archetype deck)",
     )
-    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="default LLM model id")
+    parser.add_argument(
+        "--persona-a-backend",
+        choices=("ollama", "anthropic_sdk"),
+        default="ollama",
+        help="LLM backend for persona-a (default: ollama).",
+    )
+    parser.add_argument(
+        "--persona-b-backend",
+        choices=("ollama", "anthropic_sdk"),
+        default="ollama",
+        help="LLM backend for persona-b (default: ollama).",
+    )
+    parser.add_argument(
+        "--persona-a-model",
+        default=None,
+        help="override --model for persona-a (e.g. 'haiku' / 'sonnet' / 'opus' for anthropic_sdk).",
+    )
+    parser.add_argument(
+        "--persona-b-model",
+        default=None,
+        help="override --model for persona-b.",
+    )
     parser.add_argument("--max-steps", type=int, default=500)
     parser.add_argument("--verbose", action="store_true", default=True)
     parser.add_argument("--quiet", action="store_false", dest="verbose")
@@ -460,6 +631,10 @@ def main() -> None:
         game_id=game_id,
         verbose=args.verbose,
         random_agents=args.random,
+        persona_a_backend=args.persona_a_backend,
+        persona_b_backend=args.persona_b_backend,
+        persona_a_model=args.persona_a_model,
+        persona_b_model=args.persona_b_model,
     )
 
 

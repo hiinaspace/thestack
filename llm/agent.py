@@ -62,14 +62,29 @@ class Agent:
 
     # ------------------------------------------------------------------- run
 
-    def run(self, user_message: str, *, verbose: bool = False) -> AgentResponse:
-        """Send a user turn; loop through any tool calls; return final answer."""
+    def run(
+        self,
+        user_message: str,
+        *,
+        verbose: bool = False,
+        max_iterations: int | None = None,
+        wait_for_commit: bool = True,
+    ) -> AgentResponse:
+        """Send a user turn; loop through any tool calls; return final answer.
+
+        With defaults, the loop also breaks early once the toolbox records a
+        submit_action / submit_decision commit. Pass ``wait_for_commit=False``
+        for narration-only callers (react hooks) that don't expect a commit;
+        the loop then exits cleanly as soon as the model stops calling tools.
+        ``max_iterations`` overrides the class default for tight react budgets.
+        """
         self.history.append({"role": "user", "content": user_message})
 
         last_content = ""
         last_thinking: str | None = None
+        limit = max_iterations if max_iterations is not None else self.MAX_TOOL_ITERATIONS
 
-        for _ in range(self.MAX_TOOL_ITERATIONS):
+        for _ in range(limit):
             try:
                 response = self.client.chat(
                     model=self.model,
@@ -104,9 +119,13 @@ class Agent:
                 self._execute_tool_call(tc, verbose=verbose)
 
             # If the toolbox recorded an action, we're done.
-            if self.toolbox is not None and (
-                self.toolbox.chosen_action_id is not None
-                or self.toolbox.chosen_decision_response is not None
+            if (
+                wait_for_commit
+                and self.toolbox is not None
+                and (
+                    self.toolbox.chosen_action_id is not None
+                    or self.toolbox.chosen_decision_response is not None
+                )
             ):
                 break
 

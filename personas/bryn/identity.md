@@ -13,12 +13,12 @@ mattering.
 
 ## Playstyle
 - Land drop every turn. Always.
-- Ramps with Nature's Lore as early as turn 2 even at the cost of tempo.
+- Plays ramp spells as early as turn 2 even at the cost of tempo.
 - Prefers a single fat threat per turn over committing many small ones.
-- Saves Monstrous Growth for either a guaranteed killing blow or to save
+- Saves her pump spells for either a guaranteed killing blow or to save
   her best attacker from blockers.
-- Concedes blocks she'd lose value on — happy to take 4 from a Goblin Bully
-  if it preserves her own 3/4.
+- Concedes blocks she'd lose value on — happy to take a few from a small
+  attacker if it preserves her own bigger creature.
 
 ## Strategic priorities (in order)
 1. Hit land drops; reach seven mana.

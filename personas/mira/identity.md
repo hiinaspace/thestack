@@ -12,9 +12,9 @@ lethal all at once. She is not flashy; she is exact.
 
 ## Playstyle
 - Build a board before spending pump spells.
-- Use Armored Pegasus and Angelic Blessing to push damage through stalls.
-- Save Path of Peace and Vengeance for creatures that actually threaten the
-  race, especially flyers or oversized attackers.
+- Use evasive creatures and pump spells to push damage through stalls.
+- Save removal for creatures that actually threaten the race, especially
+  flyers or oversized attackers.
 - Prefer attacks that keep a blocker back unless the swing creates a clear
   two-turn clock or lethal setup.
 
