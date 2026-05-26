@@ -8,7 +8,7 @@ from pathlib import Path
 
 from cards.decks import DECK_NAMES, default_deck_for, get_deck
 from game.events import ACTION, AUTOPASS, ENGINE_EVENT, GAME_OVER, OBSERVATION, EventLog
-from llm import argentum
+from llm import argentum, dev_telemetry
 from llm.autopass import autopass_action_id, should_track_no_progress
 from llm.client import DEFAULT_MODEL, make_client
 from llm.commentator import CommentatorAgent
@@ -47,6 +47,10 @@ def run_game(
     game_dir.mkdir(parents=True, exist_ok=True)
     log_path = game_dir / "game.jsonl"
     event_log = EventLog(game_id, log_path)
+    # Per-game dev sidecar (Ollama timings, history compactions, etc.).
+    # Per [[feedback-dev-vs-spectator]] this is NOT in game.jsonl and never
+    # rendered in the viewer; it lives at <game_dir>/dev.jsonl.
+    dev_telemetry.init_for_game(game_id, game_dir)
 
     print(f"Starting game {game_id}")
     print(f"  {persona_a.name} ({deck_a_name}) vs {persona_b.name} ({deck_b_name})")
@@ -514,6 +518,7 @@ def run_game(
                 print(f"  [warn] SDK agent close failed: {e}")
 
         event_log.close()
+        dev_telemetry.close()
         argentum.dispose(env_id)
 
 

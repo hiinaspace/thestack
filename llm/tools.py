@@ -350,21 +350,34 @@ TOOL_SCHEMAS: list[dict] = [
         "function": {
             "name": "submit_action",
             "description": (
-                "Commit to one of the numbered legal actions for this decision point. "
-                "MUST be called exactly once per decision; ends your turn-thinking."
+                "REQUIRED. Commit to one of the numbered legal actions for this "
+                "decision. You MUST call this exactly once per decision; the "
+                "harness will not advance until you do. Call it in the SAME "
+                "response as your monologue/table_talk tool calls — do not "
+                "split a single decision across multiple turns. `action_id` is "
+                "an integer drawn verbatim from the 'Legal actions' list. The "
+                "only valid tools at any decision are exactly: take_note, "
+                "recall_strategy, monologue, table_talk, set_turn_plan, "
+                "update_turn_plan, submit_action, submit_decision. Do not "
+                "invent any other tool names (e.g. 'play_card', 'attack', "
+                "'choose_action') — they will fail."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
                     "action_id": {
                         "type": "integer",
-                        "description": "The numeric id of the chosen legal action.",
+                        "description": (
+                            "The numeric id of the chosen legal action, copied "
+                            "verbatim from the 'Legal actions' list."
+                        ),
                     },
                     "reasoning": {
                         "type": "string",
                         "description": (
                             "One or two sentences of natural-language reasoning, "
-                            "spoken in-character for the spectator transcript."
+                            "spoken in-character for the spectator transcript. "
+                            "This is the public action declaration; keep it short."
                         ),
                     },
                 },

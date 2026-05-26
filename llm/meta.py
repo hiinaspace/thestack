@@ -12,8 +12,8 @@ import re
 import ollama
 
 from game.events import INFO, EventLog
-from llm import oracle
-from llm.client import DEFAULT_MODEL
+from llm import dev_telemetry, oracle
+from llm.client import DEFAULT_MODEL, chat_options
 from llm.commentator import _format_engine_events
 from llm.persona import Persona
 from llm.prompts import format_public_state_for_commentator
@@ -51,12 +51,18 @@ def write_pre_game_strategy(
         f"{opponent_name}? Plain markdown, no preamble."
     )
 
-    response = client.chat(
+    with dev_telemetry.call_span(
+        "ollama_chat",
+        agent=f"strategist:{persona.name}",
         model=model,
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        think=False,
-        options={"temperature": 0.8},
-    )
+    ) as span:
+        response = client.chat(
+            model=model,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            think=False,
+            options=chat_options(temperature=0.8),
+        )
+        dev_telemetry.record_ollama_response(span, response)
     plan = (response.message.content or "").strip()
     persona.write_strategy(plan)
 
@@ -124,12 +130,18 @@ def reflect_after_game(
         "This block REPLACES the existing entry for them.>"
     )
 
-    response = client.chat(
+    with dev_telemetry.call_span(
+        "ollama_chat",
+        agent=f"reflector:{persona.name}",
         model=model,
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-        think=False,
-        options={"temperature": 0.7},
-    )
+    ) as span:
+        response = client.chat(
+            model=model,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            think=False,
+            options=chat_options(temperature=0.7),
+        )
+        dev_telemetry.record_ollama_response(span, response)
     text = (response.message.content or "").strip()
     table_talk, memory_block, opponent_block = _split_reflection(text, opponent_name)
 
