@@ -18,9 +18,15 @@ def create_env(
     perspective_index: int = 0,
     reveal_all: bool = True,
     skip_mulligans: bool = False,
+    library_seed: int | None = None,
 ) -> tuple[str, dict]:
-    """Create a new game env. Returns (env_id, opening_observation)."""
-    payload = {
+    """Create a new game env. Returns (env_id, opening_observation).
+
+    ``library_seed`` pins the per-game library-shuffle PRNG so the same opening
+    hands and draw order replay across runs. None = non-deterministic shuffle
+    (default for self-play); set to any int for reproducible scenarios.
+    """
+    payload: dict = {
         "players": [
             {"name": player_a, "deck": {"type": "Explicit", "cards": deck_a}},
             {"name": player_b, "deck": {"type": "Explicit", "cards": deck_b}},
@@ -29,6 +35,8 @@ def create_env(
         "perspectivePlayerIndex": perspective_index,
         "revealAll": reveal_all,
     }
+    if library_seed is not None:
+        payload["librarySeed"] = int(library_seed)
     r = _SESSION.post(f"{ARGENTUM_HOST}/envs", json=payload, timeout=30)
     r.raise_for_status()
     data = r.json()

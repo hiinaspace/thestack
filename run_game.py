@@ -32,11 +32,16 @@ def run_game(
     persona_b_backend: str = "ollama",
     persona_a_model: str | None = None,
     persona_b_model: str | None = None,
+    library_seed: int | None = None,
 ) -> None:
     persona_a = Persona(persona_a_name)
     persona_b = Persona(persona_b_name)
     deck_a = get_deck(deck_a_name)
     deck_b = get_deck(deck_b_name)
+    deck_for_player: dict[str, str] = {
+        persona_a.name: deck_a_name,
+        persona_b.name: deck_b_name,
+    }
 
     game_dir = Path("games") / game_id
     game_dir.mkdir(parents=True, exist_ok=True)
@@ -143,6 +148,7 @@ def run_game(
         deck_b,
         reveal_all=True,
         skip_mulligans=False,
+        library_seed=library_seed,
     )
     event_log.append(OBSERVATION, {"obs": obs})
 
@@ -252,6 +258,19 @@ def run_game(
 
             legal_actions = obs.get("legalActions", [])
             pending_decision = obs.get("pendingDecision") or {}
+            # Capture any surfaced structured decision — pendingDecision can
+            # appear with legal_actions too (engine enumerates each option as
+            # a DECISION-kind legal action for short choice lists like
+            # SELECT_CARDS over a 16-card library). The structured-only branch
+            # below still requires legal_actions to be empty so a numbered
+            # pick takes precedence when both shapes are available.
+            if pending_decision.get("requiresStructuredResponse"):
+                _capture_decision_fixture(
+                    game_dir,
+                    obs,
+                    acting_name,
+                    deck_for_player.get(acting_name, ""),
+                )
             if not legal_actions and pending_decision.get("requiresStructuredResponse"):
                 if verbose:
                     print(
@@ -289,7 +308,7 @@ def run_game(
                     advance = argentum.submit_decision(
                         env_id,
                         decision_response,
-                        auto_resolve_decisions=True,
+                        auto_resolve_decisions=False,
                     )
                     obs = advance["observation"]
                     engine_events = advance.get("events") or []
@@ -394,7 +413,7 @@ def run_game(
                 advance = argentum.advance(
                     env_id,
                     action_id,
-                    auto_resolve_decisions=True,
+                    auto_resolve_decisions=False,
                     x_value=x_value,
                     damage_distribution=damage_distribution,
                 )
@@ -496,6 +515,59 @@ def run_game(
 
         event_log.close()
         argentum.dispose(env_id)
+
+
+def _capture_decision_fixture(
+    game_dir: Path,
+    obs: dict,
+    perspective_name: str,
+    deck_name: str,
+) -> None:
+    """Dump a fixture-shaped JSON of a surfaced structured decision.
+
+    Writes to ``<game_dir>/decisions/<turn>-<kind>-<source>.json`` with the
+    same ``_meta`` + obs envelope the hand-crafted fixtures under
+    ``tests/fixtures/*/*.json`` use. Two purposes:
+
+    1. Keep the fixture format honest — captured-from-real-engine obs is the
+       ground truth; if the hand-crafted ones drift from this shape they
+       should be regenerated from captures.
+    2. Make it cheap to promote a real game-state to a regression test:
+       cp the captured file under tests/fixtures/<kind>/.
+
+    Dev side-file per the dev-vs-spectator rule (not in game.jsonl / viewer).
+    """
+    import json as _json
+
+    pd = obs.get("pendingDecision") or {}
+    if not pd.get("requiresStructuredResponse"):
+        return
+    decisions_dir = game_dir / "decisions"
+    decisions_dir.mkdir(parents=True, exist_ok=True)
+    turn = obs.get("turnNumber", "?")
+    kind = (pd.get("kind") or "DECISION").lower()
+    source = (pd.get("sourceName") or "unknown").replace(" ", "_").replace("'", "")
+    seq_suffix = len(list(decisions_dir.glob(f"t{turn}-{kind}-{source}*.json")))
+    fname = f"t{turn}-{kind}-{source}"
+    if seq_suffix:
+        fname += f"-{seq_suffix}"
+    fname += ".json"
+    fixture = {
+        "_meta": {
+            "fixture": fname.removesuffix(".json"),
+            "kind": pd.get("kind"),
+            "scenario": (
+                f"Auto-captured from live game: {perspective_name} faces "
+                f"{pd.get('kind')} from {pd.get('sourceName', '?')} on turn {turn}."
+            ),
+            "perspective_player_name": perspective_name,
+            "deck": deck_name,
+            "captured_at": "live",
+        },
+        **obs,
+    }
+    with (decisions_dir / fname).open("w", encoding="utf-8") as f:
+        _json.dump(fixture, f, indent=2)
 
 
 def _capture_react_triggers(
@@ -616,6 +688,17 @@ def main() -> None:
         action="store_true",
         help="use deterministic RandomAgent instead of LLM (fast harness smoke test)",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help=(
+            "pin the per-game library-shuffle PRNG (any int). Default is "
+            "non-deterministic. Use to replay an exact opening hand / draw "
+            "order across runs — e.g. for regression tests or seeding a "
+            "specific card into early turns."
+        ),
+    )
     args = parser.parse_args()
 
     game_id = args.game_id or str(uuid.uuid4())
@@ -635,6 +718,7 @@ def main() -> None:
         persona_b_backend=args.persona_b_backend,
         persona_a_model=args.persona_a_model,
         persona_b_model=args.persona_b_model,
+        library_seed=args.seed,
     )
 
 
