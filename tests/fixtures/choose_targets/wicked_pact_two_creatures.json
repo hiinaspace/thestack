@@ -1,0 +1,146 @@
+{
+  "_meta": {
+    "fixture": "wicked_pact_two_creatures",
+    "kind": "CHOOSE_TARGETS",
+    "scenario": "Noct casts Wicked Pact (destroy two target nonblack creatures, lose 5 life). Opponent (Bryn) controls four green creatures — two beefy threats (Spined Wurm, Charging Rhino) and two smaller bodies (Jungle Lion, Elvish Ranger). The pact has TWO independent target slots; the LLM must pick the best pair, not duplicate the same creature.",
+    "expected_response_shape": "TargetsResponse with selectedTargets = {\"0\": [<one entityId>], \"1\": [<one different entityId>]} — both from Bryn's green creatures. The two big threats are the obvious choice; picking the same creature twice would be a misuse of the second slot.",
+    "perspective_player_name": "noct",
+    "deck": "black_removal"
+  },
+  "schemaHash": "test-fixture",
+  "perspectivePlayerId": "P-noct",
+  "agentToAct": "P-noct",
+  "turnNumber": 5,
+  "phase": "MAIN",
+  "step": "MAIN_PRECOMBAT",
+  "activePlayerId": "P-noct",
+  "priorityPlayerId": "P-noct",
+  "players": [
+    {
+      "id": "P-noct",
+      "name": "noct",
+      "lifeTotal": 14,
+      "handSize": 1,
+      "librarySize": 45,
+      "graveyardSize": 2,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": true,
+      "isActive": true,
+      "hasPriority": true,
+      "hasLost": false
+    },
+    {
+      "id": "P-bryn",
+      "name": "bryn",
+      "lifeTotal": 18,
+      "handSize": 3,
+      "librarySize": 43,
+      "graveyardSize": 0,
+      "exileSize": 0,
+      "manaPool": {"white": 0, "blue": 0, "black": 0, "red": 0, "green": 0, "colorless": 0},
+      "isPerspective": false,
+      "isActive": false,
+      "hasPriority": false,
+      "hasLost": false
+    }
+  ],
+  "zones": [
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 5,
+      "cards": [
+        {"entityId": "C-swamp-1", "cardDefinitionId": "por/Swamp", "name": "Swamp", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["SWAMP"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {B}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-swamp-2", "cardDefinitionId": "por/Swamp", "name": "Swamp", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["SWAMP"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {B}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-swamp-3", "cardDefinitionId": "por/Swamp", "name": "Swamp", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["SWAMP"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {B}.", "power": null, "toughness": null, "tapped": true},
+        {"entityId": "C-swamp-4", "cardDefinitionId": "por/Swamp", "name": "Swamp", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["LAND"], "subtypes": ["SWAMP"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {B}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-bog-imp", "cardDefinitionId": "por/Bog Imp", "name": "Bog Imp", "zone": "Battlefield", "ownerId": "P-noct", "controllerId": "P-noct", "types": ["CREATURE"], "subtypes": ["IMP"], "colors": ["BLACK"], "keywords": ["FLYING"], "manaCost": "{1}{B}", "manaValue": 2, "oracleText": "Flying", "power": 1, "toughness": 1, "tapped": false, "summoningSick": false}
+      ]
+    },
+    {
+      "ownerId": "P-bryn",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 8,
+      "cards": [
+        {"entityId": "C-forest-1", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-forest-2", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-forest-3", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-forest-4", "cardDefinitionId": "por/Forest", "name": "Forest", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["LAND"], "subtypes": ["FOREST"], "colors": [], "keywords": [], "manaCost": "", "manaValue": 0, "oracleText": "{T}: Add {G}.", "power": null, "toughness": null, "tapped": false},
+        {"entityId": "C-jungle-lion", "cardDefinitionId": "por/Jungle Lion", "name": "Jungle Lion", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["CAT"], "colors": ["GREEN"], "keywords": [], "manaCost": "{G}", "manaValue": 1, "oracleText": "Jungle Lion can't block.", "power": 2, "toughness": 1, "tapped": false, "summoningSick": false},
+        {"entityId": "C-elvish-ranger", "cardDefinitionId": "por/Elvish Ranger", "name": "Elvish Ranger", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["ELF"], "colors": ["GREEN"], "keywords": [], "manaCost": "{2}{G}", "manaValue": 3, "oracleText": "", "power": 4, "toughness": 1, "tapped": false, "summoningSick": false},
+        {"entityId": "C-spined-wurm", "cardDefinitionId": "por/Spined Wurm", "name": "Spined Wurm", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["WURM"], "colors": ["GREEN"], "keywords": [], "manaCost": "{4}{G}", "manaValue": 5, "oracleText": "", "power": 5, "toughness": 4, "tapped": false, "summoningSick": false},
+        {"entityId": "C-charging-rhino", "cardDefinitionId": "por/Charging Rhino", "name": "Charging Rhino", "zone": "Battlefield", "ownerId": "P-bryn", "controllerId": "P-bryn", "types": ["CREATURE"], "subtypes": ["RHINO"], "colors": ["GREEN"], "keywords": [], "manaCost": "{3}{G}{G}", "manaValue": 5, "oracleText": "Charging Rhino can't be blocked by more than one creature.", "power": 4, "toughness": 4, "tapped": false, "summoningSick": false}
+      ]
+    },
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Hand",
+      "hidden": false,
+      "size": 1,
+      "cards": [
+        {"entityId": "H-vampiric-touch", "cardDefinitionId": "por/Vampiric Touch", "name": "Vampiric Touch", "zone": "Hand", "ownerId": "P-noct", "controllerId": null, "types": ["SORCERY"], "subtypes": [], "colors": ["BLACK"], "keywords": [], "manaCost": "{2}{B}", "manaValue": 3, "oracleText": "Vampiric Touch deals 2 damage to target player and you gain 2 life.", "power": null, "toughness": null}
+      ]
+    },
+    {"ownerId": "P-bryn", "zoneType": "Hand", "hidden": true, "size": 3, "cards": []},
+    {
+      "ownerId": "P-noct",
+      "zoneType": "Graveyard",
+      "hidden": false,
+      "size": 2,
+      "cards": [
+        {"entityId": "G-hand-of-death", "cardDefinitionId": "por/Hand of Death", "name": "Hand of Death", "zone": "Graveyard", "ownerId": "P-noct", "controllerId": null, "types": ["SORCERY"], "subtypes": [], "colors": ["BLACK"], "keywords": [], "manaCost": "{2}{B}", "manaValue": 3, "oracleText": "Destroy target nonblack creature.", "power": null, "toughness": null},
+        {"entityId": "G-feral-shadow", "cardDefinitionId": "por/Feral Shadow", "name": "Feral Shadow", "zone": "Graveyard", "ownerId": "P-noct", "controllerId": null, "types": ["CREATURE"], "subtypes": ["NIGHTSTALKER"], "colors": ["BLACK"], "keywords": ["FLYING"], "manaCost": "{2}{B}", "manaValue": 3, "oracleText": "Flying", "power": 2, "toughness": 1}
+      ]
+    },
+    {"ownerId": "P-bryn", "zoneType": "Graveyard", "hidden": false, "size": 0, "cards": []},
+    {"ownerId": "P-noct", "zoneType": "Library", "hidden": true, "size": 45, "cards": []},
+    {"ownerId": "P-bryn", "zoneType": "Library", "hidden": true, "size": 43, "cards": []}
+  ],
+  "stack": [
+    {"entityId": "S-wicked-pact-1", "controllerId": "P-noct", "name": "Wicked Pact", "kind": "SPELL", "oracleText": "Destroy two target nonblack creatures. You lose 5 life.", "targets": []}
+  ],
+  "pendingDecision": {
+    "decisionId": "dec-wicked-pact-1",
+    "kind": "CHOOSE_TARGETS",
+    "playerId": "P-noct",
+    "prompt": "Choose two target nonblack creatures to destroy.",
+    "sourceEntityId": "S-wicked-pact-1",
+    "sourceName": "Wicked Pact",
+    "effectHint": "Destroy two target nonblack creatures. You lose 5 life.",
+    "requiresStructuredResponse": true,
+    "shape": {"minSelections": 2, "maxSelections": 2},
+    "targetRequirements": [
+      {"index": 0, "label": "first nonblack creature", "minTargets": 1, "maxTargets": 1},
+      {"index": 1, "label": "second nonblack creature", "minTargets": 1, "maxTargets": 1}
+    ],
+    "legalTargets": {
+      "0": [
+        {"entityId": "C-jungle-lion", "label": "Jungle Lion (2/1)"},
+        {"entityId": "C-elvish-ranger", "label": "Elvish Ranger (4/1)"},
+        {"entityId": "C-spined-wurm", "label": "Spined Wurm (5/4)"},
+        {"entityId": "C-charging-rhino", "label": "Charging Rhino (4/4)"}
+      ],
+      "1": [
+        {"entityId": "C-jungle-lion", "label": "Jungle Lion (2/1)"},
+        {"entityId": "C-elvish-ranger", "label": "Elvish Ranger (4/1)"},
+        {"entityId": "C-spined-wurm", "label": "Spined Wurm (5/4)"},
+        {"entityId": "C-charging-rhino", "label": "Charging Rhino (4/4)"}
+      ]
+    },
+    "options": [],
+    "modes": [],
+    "optionTexts": [],
+    "distributionTargets": [],
+    "ordered": false,
+    "canCancel": false,
+    "allowPartial": false,
+    "minPerTarget": 0
+  },
+  "legalActions": [],
+  "terminated": false,
+  "winnerId": null,
+  "stateDigest": "test-fixture-wicked-pact"
+}
