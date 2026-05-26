@@ -136,9 +136,10 @@ Rules of the game:
     mana on a spell — mana left in your pool evaporates at end of step. If
     you have no spell to cast, pass priority instead of tapping a land for
     nothing.
-  - If an action says "equivalent engine variants collapsed", that is one
-    strategic choice with multiple identical engine bindings, not multiple
-    spells or extra plays.
+  - A `(×N copies)` or `(×N untapped)` suffix on an action means N
+    interchangeable engine instances collapsed into one menu entry — pick
+    the listed ID and the engine binds to one of them; it is NOT a chance
+    to play multiple at once.
   - Mulligans: 0-land and 1-land opening hands are usually mulligans; 2-4 lands
     with early plays are usually keeps. When bottoming after a mulligan, keep a
     functional land/spell mix.
@@ -188,9 +189,8 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         f"Turn {turn} | {phase} / {step} | Priority: {priority_name}",
         "",
         f"YOUR LIFE: {acting.get('lifeTotal', '?')} | {opponent_name}'s LIFE: {opponent.get('lifeTotal', '?')}",
-        f"YOUR MANA POOL NOW: {_fmt_mana_pool(acting.get('manaPool') or {})}",
-        f"{opponent_name}'s MANA POOL NOW: {_fmt_mana_pool(opponent.get('manaPool') or {})}",
-        "Untapped lands are potential mana sources, not already-floating mana.",
+        _format_mana_position(obs, acting_player_name),
+        f"{opponent_name}'s mana pool: {_fmt_mana_pool(opponent.get('manaPool') or {})}",
     ]
 
     # Zones
@@ -602,14 +602,20 @@ def format_legal_actions(
         action_id = a["actionId"]
         desc = a.get("description", "?")
         cost = a.get("manaCost")
-        affordable = a.get("affordable", True)
         suffix = ""
         if cost:
             suffix = f" [cost: {cost}]"
-        if not affordable:
-            suffix += " [can't afford]"
+        # Affordability is intentionally NOT surfaced as a separate label —
+        # the engine's `affordable` field reflects the mana pool *right now*
+        # and ignores untapped lands, which misled the LLM into thinking
+        # castable spells were impossible. The YOUR MANA block in
+        # format_observation gives the LLM the synthesized total spendable;
+        # let it compare against the cost suffix above.
         if len(grouped) > 1:
-            suffix += f" [{len(grouped)} equivalent engine variants collapsed]"
+            if a.get("isManaAbility"):
+                suffix += f" (×{len(grouped)} untapped)"
+            else:
+                suffix += f" (×{len(grouped)} copies)"
         target_note = _targeting_note(a, obs, acting_player_name)
         if target_note:
             suffix += f" [{target_note}]"
@@ -1322,13 +1328,89 @@ def _has_card_type(card: dict, card_type: str) -> bool:
     return any(str(t).upper() == wanted for t in card.get("types", []))
 
 
+_COLOR_ABBREV = {
+    "white": "W",
+    "blue": "U",
+    "black": "B",
+    "red": "R",
+    "green": "G",
+    "colorless": "C",
+}
+_LAND_TO_COLOR = {"PLAINS": "W", "ISLAND": "U", "SWAMP": "B", "MOUNTAIN": "R", "FOREST": "G"}
+
+
 def _fmt_mana_pool(pool: dict) -> str:
     parts = []
     for color in ("white", "blue", "black", "red", "green", "colorless"):
         amount = pool.get(color, 0)
         if amount:
-            parts.append(f"{amount} {color}")
-    return ", ".join(parts) if parts else "empty"
+            parts.append("{" + _COLOR_ABBREV[color] + "}" * amount)
+    return "".join(parts) if parts else "(empty)"
+
+
+def _untapped_land_colors(obs: dict, player_id: str) -> dict[str, int]:
+    """Return {color_abbrev: count} of the player's untapped lands by produced color.
+
+    Best-effort: prefers the land's subtype (Plains/Island/Swamp/Mountain/Forest)
+    over the oracle text. Non-basic lands without a recognized subtype fall back
+    to scanning the oracle text for `{X}` tokens. Lands with no recognizable
+    color contribution are surfaced under "?".
+    """
+    counts: dict[str, int] = {}
+    for zone in obs.get("zones", []):
+        if zone.get("ownerId") != player_id or zone.get("zoneType") != "Battlefield":
+            continue
+        for card in zone.get("cards", []):
+            if "LAND" not in (t.upper() for t in card.get("types", [])):
+                continue
+            if card.get("tapped"):
+                continue
+            color = None
+            for subtype in card.get("subtypes", []):
+                color = _LAND_TO_COLOR.get(str(subtype).upper())
+                if color:
+                    break
+            if color is None:
+                otext = card.get("oracleText", "")
+                for abbr in ("W", "U", "B", "R", "G", "C"):
+                    if f"{{{abbr}}}" in otext:
+                        color = abbr
+                        break
+            counts[color or "?"] = counts.get(color or "?", 0) + 1
+    return counts
+
+
+def _format_mana_position(obs: dict, acting_player_name: str) -> str:
+    """Synthesize a 'mana available this priority' block.
+
+    Combines the player's mana pool (already floating) with their untapped
+    lands (potential, requires tapping) into one explicit summary so the
+    LLM can compare costs directly against what they can actually spend.
+    """
+    me = next((p for p in obs.get("players", []) if p.get("name") == acting_player_name), None)
+    if me is None:
+        return "YOUR MANA: (unknown player)"
+    pool = me.get("manaPool") or {}
+    pool_str = _fmt_mana_pool(pool)
+    untapped = _untapped_land_colors(obs, me["id"])
+    if not untapped:
+        return f"YOUR MANA: pool={pool_str}; no untapped lands"
+
+    # Synthesize total spendable (pool + every untapped land tapped for one mana).
+    total: dict[str, int] = {}
+    for color in ("white", "blue", "black", "red", "green", "colorless"):
+        n = pool.get(color, 0)
+        if n:
+            total[_COLOR_ABBREV[color]] = total.get(_COLOR_ABBREV[color], 0) + n
+    for color, n in untapped.items():
+        total[color] = total.get(color, 0) + n
+
+    total_str = "".join(("{" + c + "}") * total[c] for c in sorted(total)) if total else "(none)"
+    untapped_str = ", ".join(f"{n}×{{{c}}}" for c, n in sorted(untapped.items()))
+    return (
+        f"YOUR MANA: pool={pool_str}; untapped lands={untapped_str}; "
+        f"max spendable this priority if you tap all={total_str}"
+    )
 
 
 def _power_toughness(card: dict) -> tuple[object | None, object | None]:

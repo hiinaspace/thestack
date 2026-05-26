@@ -1,0 +1,3253 @@
+{
+  "_meta": {
+    "fixture": "mana_confusion_t4",
+    "kind": "PROMPT_FORMATTING",
+    "scenario": "Bryn (green_tutor) on turn 4 PRECOMBAT_MAIN with 3 untapped Forests, empty pool. Cast Untamed Wilds [{2}{G}] in hand. Multiple identical mana abilities + duplicate cast entries. Tests whether the LLM understands it can tap lands then cast.",
+    "perspective_player_name": "bryn",
+    "deck": "green_tutor",
+    "captured_at": "seq 379 of games/new-decks-live-decisions"
+  },
+  "schemaHash": "argentum-gym-contract@v1.2-decision-details",
+  "perspectivePlayerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+  "agentToAct": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+  "turnNumber": 3,
+  "phase": "PRECOMBAT_MAIN",
+  "step": "PRECOMBAT_MAIN",
+  "activePlayerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+  "priorityPlayerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+  "players": [
+    {
+      "id": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+      "name": "noct",
+      "lifeTotal": 20,
+      "handSize": 5,
+      "librarySize": 51,
+      "graveyardSize": 0,
+      "exileSize": 0,
+      "manaPool": {
+        "white": 0,
+        "blue": 0,
+        "black": 0,
+        "red": 0,
+        "green": 0,
+        "colorless": 0
+      },
+      "isPerspective": false,
+      "isActive": false,
+      "hasPriority": false,
+      "hasLost": false
+    },
+    {
+      "id": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+      "name": "bryn",
+      "lifeTotal": 20,
+      "handSize": 6,
+      "librarySize": 50,
+      "graveyardSize": 1,
+      "exileSize": 0,
+      "manaPool": {
+        "white": 0,
+        "blue": 0,
+        "black": 0,
+        "red": 0,
+        "green": 0,
+        "colorless": 0
+      },
+      "isPerspective": true,
+      "isActive": true,
+      "hasPriority": true,
+      "hasLost": false
+    }
+  ],
+  "zones": [
+    {
+      "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+      "zoneType": "Hand",
+      "hidden": false,
+      "size": 5,
+      "cards": [
+        {
+          "entityId": "ab9914ee-040a-455d-bca8-f1b6581428fb",
+          "cardDefinitionId": "Hand of Death#96",
+          "name": "Hand of Death",
+          "zone": "Hand",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "f1a1cc2a-9b6c-4eb9-a522-4c36d621911e",
+          "cardDefinitionId": "Arrogant Vampire#79",
+          "name": "Arrogant Vampire",
+          "zone": "Hand",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Vampire"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{3}{B}{B}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e43cbbf8-5d3d-4d56-9a46-9be9b7fc62c2",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Hand",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "da9e8181-dd86-4392-9a29-398eeb711feb",
+          "cardDefinitionId": "Wicked Pact#117",
+          "name": "Wicked Pact",
+          "zone": "Hand",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{B}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "a9d7e48e-0023-4f1c-9f6e-4ff22aa80716",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Hand",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+      "zoneType": "Library",
+      "hidden": false,
+      "size": 51,
+      "cards": [
+        {
+          "entityId": "597b0802-7c6c-4711-83f1-d940b624fab0",
+          "cardDefinitionId": "Hand of Death#96",
+          "name": "Hand of Death",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "7d5965f3-3c5c-457f-82fb-c0c8ee975521",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e23b490d-ae62-419c-a9bb-d9639fdb0370",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "4b3bd01c-69e2-4ef5-9e3a-59e022bd21f4",
+          "cardDefinitionId": "Bog Imp#81",
+          "name": "Bog Imp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Imp"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{1}{B}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "c0707d0d-8894-43f6-bab4-88fdffdc77c4",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "0349f6a8-c4b3-459a-a76d-320ba3d66ad3",
+          "cardDefinitionId": "Cruel Tutor#87",
+          "name": "Cruel Tutor",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "096413f1-f96d-449e-a11e-9fc6977547a3",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "69747a9f-ebca-4674-a153-84dd74f979a1",
+          "cardDefinitionId": "Bog Imp#81",
+          "name": "Bog Imp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Imp"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{1}{B}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "d02e5d29-4400-4793-a6af-7d087d8f1e68",
+          "cardDefinitionId": "Gravedigger#95",
+          "name": "Gravedigger",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Zombie"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{B}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "0f4a0a82-ec89-4fa7-b268-03f209a1343d",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "b7226254-a5b2-417c-b979-55bc54a27b58",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e2ff113f-30cd-4023-afae-7ebcf74a0083",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "8bbca28d-be4e-45df-8dd4-d26ffd62938f",
+          "cardDefinitionId": "Wicked Pact#117",
+          "name": "Wicked Pact",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{B}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "49210c49-c4d4-4cce-aca8-b435ef0d416f",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "361751b1-5820-4270-9c01-d40993090826",
+          "cardDefinitionId": "Arrogant Vampire#79",
+          "name": "Arrogant Vampire",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Vampire"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{3}{B}{B}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "bb1cb2b6-ff57-4b36-914d-cf5958c18e68",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "eb07e720-d81f-408f-a4c1-95d1da662e34",
+          "cardDefinitionId": "Bog Imp#81",
+          "name": "Bog Imp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Imp"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{1}{B}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "cfd80f0a-5802-41d2-8659-26464cf3fa94",
+          "cardDefinitionId": "Cruel Tutor#87",
+          "name": "Cruel Tutor",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "b27ba586-544f-4fc5-ba12-5e5cd6eccc4f",
+          "cardDefinitionId": "Vampiric Touch#115",
+          "name": "Vampiric Touch",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "6a0f21f2-3a15-49d8-809f-713642222eb7",
+          "cardDefinitionId": "Mind Rot#101",
+          "name": "Mind Rot",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "b4357ce9-661e-4937-9ade-d0801b578438",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "14ed11f5-f69a-4aaa-b61c-d5275b37846a",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "255d34a0-163c-415f-bfff-fd94936b9c3a",
+          "cardDefinitionId": "Gravedigger#95",
+          "name": "Gravedigger",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Zombie"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{B}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e281d6cc-52ed-47d0-8e94-1006b5901def",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "0fdaca72-1a13-46ee-87b9-2eac194ff6f3",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "91bb5eaa-d6d7-4f16-acea-f1cf959be1a3",
+          "cardDefinitionId": "Cruel Tutor#87",
+          "name": "Cruel Tutor",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "7d4ba6e0-408d-4bc5-be2d-889ba72f02e4",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "9d7ff870-25ac-48e5-a141-73a812095f1a",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "973d904e-a237-47a1-ba6e-c5b4e8c377ef",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "4a8e792d-ff6a-4405-8318-b0927c6b0c0f",
+          "cardDefinitionId": "Hand of Death#96",
+          "name": "Hand of Death",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "943242bc-0a51-4565-a56b-bc6e1effc5ad",
+          "cardDefinitionId": "Feral Shadow#93",
+          "name": "Feral Shadow",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Nightstalker"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "3cdfecbd-b9b1-4520-b1a1-e2039533fa85",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "2cdd471b-f69e-4c4c-bea0-b54f42a97b0d",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "9a1b2209-929d-4133-b393-c1cc5d8950f9",
+          "cardDefinitionId": "King's Assassin#98",
+          "name": "King's Assassin",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Human",
+            "Assassin"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{B}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "5486d0da-2986-4cdc-85fb-39c82565cefb",
+          "cardDefinitionId": "Mind Rot#101",
+          "name": "Mind Rot",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "139b9a7a-57b8-4670-9ce3-fb02bf7a2f27",
+          "cardDefinitionId": "Vampiric Touch#115",
+          "name": "Vampiric Touch",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "622b8c2f-d73c-464b-9c77-8719e626465e",
+          "cardDefinitionId": "Wicked Pact#117",
+          "name": "Wicked Pact",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{B}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "044278bf-ab98-446f-9b1b-8a5ca08d6288",
+          "cardDefinitionId": "Gravedigger#95",
+          "name": "Gravedigger",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Zombie"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{B}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "bae7c803-144a-44bb-926b-105c4ab93750",
+          "cardDefinitionId": "Feral Shadow#93",
+          "name": "Feral Shadow",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Nightstalker"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "1016b8f3-ba7d-4b83-b7fa-2c4185bb1920",
+          "cardDefinitionId": "King's Assassin#98",
+          "name": "King's Assassin",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Human",
+            "Assassin"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{B}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "74c3e0d6-14c7-4fee-b5b4-468a145d19de",
+          "cardDefinitionId": "Feral Shadow#93",
+          "name": "Feral Shadow",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Nightstalker"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "84436289-5b5c-466f-aeab-b1ddf3baf275",
+          "cardDefinitionId": "Feral Shadow#93",
+          "name": "Feral Shadow",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Nightstalker"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "a4d9735a-e86f-4654-8f4c-fbac7748b443",
+          "cardDefinitionId": "Vampiric Touch#115",
+          "name": "Vampiric Touch",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "6e20716c-dcb8-427d-a826-499289f311c0",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "0115590b-3253-4758-be15-6cff20deb20e",
+          "cardDefinitionId": "Vampiric Touch#115",
+          "name": "Vampiric Touch",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "abaa6930-a83e-44ad-955e-83584d415fce",
+          "cardDefinitionId": "Arrogant Vampire#79",
+          "name": "Arrogant Vampire",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Vampire"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{3}{B}{B}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "bd919354-0dd1-490e-8888-0dcfdb945ff5",
+          "cardDefinitionId": "Cruel Tutor#87",
+          "name": "Cruel Tutor",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "f9765a49-853b-46aa-bbda-535e3a292966",
+          "cardDefinitionId": "Mind Rot#101",
+          "name": "Mind Rot",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "12123d47-c6d6-44fa-b23b-c7d5f26cc908",
+          "cardDefinitionId": "Hand of Death#96",
+          "name": "Hand of Death",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "acc277ea-e334-4604-9238-ab3c7ab59e9e",
+          "cardDefinitionId": "Mind Rot#101",
+          "name": "Mind Rot",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "282bac9c-565b-44c1-8a32-f2b0bcee3175",
+          "cardDefinitionId": "Bog Imp#81",
+          "name": "Bog Imp",
+          "zone": "Library",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Imp"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [
+            "FLYING"
+          ],
+          "manaCost": "{1}{B}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+      "zoneType": "Graveyard",
+      "hidden": false,
+      "size": 0,
+      "cards": []
+    },
+    {
+      "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+      "zoneType": "Exile",
+      "hidden": false,
+      "size": 0,
+      "cards": []
+    },
+    {
+      "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 4,
+      "cards": [
+        {
+          "entityId": "09c13ed5-b360-4cc2-9f1a-22bdc781362b",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Battlefield",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "controllerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "BASIC",
+            "LAND",
+            "Swamp"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": true,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "796c4f0e-98dd-43f6-af04-78c4026c9fbf",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Battlefield",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "controllerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "BASIC",
+            "LAND",
+            "Swamp"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": true,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "8d108ad5-25eb-4cc2-91c5-07494c3f62a1",
+          "cardDefinitionId": "Swamp#BLB-374",
+          "name": "Swamp",
+          "zone": "Battlefield",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "controllerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "BASIC",
+            "LAND",
+            "Swamp"
+          ],
+          "subtypes": [
+            "Swamp"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {B}.)",
+          "tapped": true,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "968e022e-cc29-4525-b485-7e1ab72736d8",
+          "cardDefinitionId": "King's Assassin#98",
+          "name": "King's Assassin",
+          "zone": "Battlefield",
+          "ownerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "controllerId": "73eea4b9-8d33-4221-b8f0-0e49c0738c8d",
+          "types": [
+            "CREATURE",
+            "Human",
+            "Assassin"
+          ],
+          "subtypes": [
+            "Human",
+            "Assassin"
+          ],
+          "colors": [
+            "BLACK"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{B}{B}",
+          "manaValue": 3,
+          "oracleText": "",
+          "power": 1,
+          "toughness": 1,
+          "tapped": false,
+          "summoningSick": true,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+      "zoneType": "Hand",
+      "hidden": false,
+      "size": 6,
+      "cards": [
+        {
+          "entityId": "53ca8e31-ca3c-4481-82bb-8b4b6d08b06f",
+          "cardDefinitionId": "Untamed Wilds#191",
+          "name": "Untamed Wilds",
+          "zone": "Hand",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "6090caba-7399-4ad9-b989-547c7dde32b3",
+          "cardDefinitionId": "Untamed Wilds#191",
+          "name": "Untamed Wilds",
+          "zone": "Hand",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "cf46a783-bb8d-466a-b52f-5ae187a448ba",
+          "cardDefinitionId": "Rowan Treefolk#184",
+          "name": "Rowan Treefolk",
+          "zone": "Hand",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Treefolk"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{G}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "6b100204-8720-4e9f-a070-4804bde04095",
+          "cardDefinitionId": "Elvish Ranger#165",
+          "name": "Elvish Ranger",
+          "zone": "Hand",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Ranger"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "3fee8c64-abb6-46a6-b3cf-b76c5235ee6c",
+          "cardDefinitionId": "Rowan Treefolk#184",
+          "name": "Rowan Treefolk",
+          "zone": "Hand",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Treefolk"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{G}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "9978bc42-c82f-4b72-a805-927819c30199",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Hand",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+      "zoneType": "Library",
+      "hidden": false,
+      "size": 50,
+      "cards": [
+        {
+          "entityId": "3ed5aa04-b19a-4322-b07e-ca00348c3c30",
+          "cardDefinitionId": "Untamed Wilds#191",
+          "name": "Untamed Wilds",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "1bcd59a9-2b4c-402c-b99b-5c67ad4ce306",
+          "cardDefinitionId": "Sylvan Tutor#188",
+          "name": "Sylvan Tutor",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{G}",
+          "manaValue": 1,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "c9b4d9d7-c244-473b-b6ed-77bbb948133b",
+          "cardDefinitionId": "Natural Order#175",
+          "name": "Natural Order",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}{G}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "de08bf9a-0e4d-4ae3-8fa2-f47ff84bf925",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "4285d804-cac0-4a87-8844-15ace0f240c3",
+          "cardDefinitionId": "Monstrous Growth#173",
+          "name": "Monstrous Growth",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "b658bb5a-c961-4ca2-841a-da34facc0359",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "547b9f31-d813-4316-8444-f1e44256d7b3",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "bf023b8d-3e06-4d9e-bfc7-506e12276848",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "9215ec10-a0ab-4c0e-b8cd-53c578bbf06f",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "3162de9e-337c-48be-bce8-4749e8c5ddcd",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "15aef541-0050-4647-bd80-0018ccdbf986",
+          "cardDefinitionId": "Spined Wurm#185",
+          "name": "Spined Wurm",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Wurm"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{4}{G}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "23b033b5-c67c-42cd-942e-4e31653b703f",
+          "cardDefinitionId": "Spined Wurm#185",
+          "name": "Spined Wurm",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Wurm"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{4}{G}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "67be382c-c5c1-4791-b457-4aec70d52f06",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "884619d3-5482-4e55-8096-26fb31c7cf91",
+          "cardDefinitionId": "Monstrous Growth#173",
+          "name": "Monstrous Growth",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e15ea39a-c50e-4d63-a204-f8bb4df59e96",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e68aea4f-639d-4d6e-9dde-4e80fc0e999a",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "41d259bf-d6dc-47e2-a372-81a9c7dce57f",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "97d42030-38e6-4543-a388-880c1d81129a",
+          "cardDefinitionId": "Elvish Ranger#165",
+          "name": "Elvish Ranger",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Ranger"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "aeb279d9-9dac-4cb6-b927-4ffb5fdad0d2",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "634a0a6c-8366-4c0f-b055-3795781de5cf",
+          "cardDefinitionId": "Elvish Ranger#165",
+          "name": "Elvish Ranger",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Ranger"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "d3442883-37d5-48a3-ad0c-a99d7d6c1f48",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "1323829e-a482-4b02-833d-4ea94bd6e9ad",
+          "cardDefinitionId": "Natural Order#175",
+          "name": "Natural Order",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}{G}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "f9ba9143-1907-4795-b30c-9dfdd54ec4b3",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "5f9c1591-e015-4b85-9f79-fa22ead0ea71",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "8a1afe8a-a206-475d-916a-21c2e33146c3",
+          "cardDefinitionId": "Sylvan Tutor#188",
+          "name": "Sylvan Tutor",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{G}",
+          "manaValue": 1,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "7f4e49f1-4247-4312-b8de-2ca578235452",
+          "cardDefinitionId": "Nature's Lore#178",
+          "name": "Nature's Lore",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "e9e445f1-c207-4755-b607-8864aab09e8c",
+          "cardDefinitionId": "Nature's Lore#178",
+          "name": "Nature's Lore",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "7d269a4d-0ae7-4fd7-92f9-e1c2b05e3956",
+          "cardDefinitionId": "Untamed Wilds#191",
+          "name": "Untamed Wilds",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "34b14911-0a86-4dc8-9937-d9af6bff34b0",
+          "cardDefinitionId": "Nature's Lore#178",
+          "name": "Nature's Lore",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "245779b8-bd1a-4978-85a3-a6f160762425",
+          "cardDefinitionId": "Sylvan Tutor#188",
+          "name": "Sylvan Tutor",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{G}",
+          "manaValue": 1,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "ed46c458-058f-42f4-91d0-f2ced9016c47",
+          "cardDefinitionId": "Rowan Treefolk#184",
+          "name": "Rowan Treefolk",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Treefolk"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{G}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "083ced20-2c60-4b98-98a0-a76a39493f32",
+          "cardDefinitionId": "Charging Rhino#161",
+          "name": "Charging Rhino",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Rhino"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{G}{G}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "382bff85-819d-4a13-abf0-5bd9d6e81518",
+          "cardDefinitionId": "Wood Elves#195",
+          "name": "Wood Elves",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Scout"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "699458b9-229f-4657-a9f4-0317a8cd838f",
+          "cardDefinitionId": "Nature's Lore#178",
+          "name": "Nature's Lore",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "3ecd2c6d-53ea-4130-8143-c3478bee2698",
+          "cardDefinitionId": "Charging Rhino#161",
+          "name": "Charging Rhino",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Rhino"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{G}{G}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "55660204-de31-4552-ac4b-12a132498682",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "4e0f5c13-9e25-4fae-81c8-432c4f605651",
+          "cardDefinitionId": "Spined Wurm#185",
+          "name": "Spined Wurm",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Wurm"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{4}{G}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "dd803733-5f7d-4215-ba06-7725c8d0b6a5",
+          "cardDefinitionId": "Wood Elves#195",
+          "name": "Wood Elves",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Scout"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "2b95c96f-0598-4a59-8f9d-8258609f2f49",
+          "cardDefinitionId": "Monstrous Growth#173",
+          "name": "Monstrous Growth",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "6eeb3cda-167d-449f-8b76-cc8c651aa44e",
+          "cardDefinitionId": "Spined Wurm#185",
+          "name": "Spined Wurm",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Wurm"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{4}{G}",
+          "manaValue": 5,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "1ff2716c-01a8-4062-882f-766c4c44cbc8",
+          "cardDefinitionId": "Wood Elves#195",
+          "name": "Wood Elves",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Scout"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "bf4ea84e-3cb5-4ebb-872a-a4f19178bfa9",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "ccb6b34a-4a3e-49e8-88a8-e576294262dd",
+          "cardDefinitionId": "Wood Elves#195",
+          "name": "Wood Elves",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Scout"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "c2dbcfe2-fbd4-4f36-83d9-0b246b731a6e",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "23cbf0f9-8b96-4069-89d3-1f90c8a54b99",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "759f4fa5-f078-4d34-8435-cd4507e9efb1",
+          "cardDefinitionId": "Monstrous Growth#173",
+          "name": "Monstrous Growth",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{1}{G}",
+          "manaValue": 2,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "18da6a8c-1c64-42c5-a17f-5ab05cc11afd",
+          "cardDefinitionId": "Elvish Ranger#165",
+          "name": "Elvish Ranger",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Elf",
+            "Ranger"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{2}{G}",
+          "manaValue": 3,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "603ccd53-10de-48af-b6d2-953d9d7bb248",
+          "cardDefinitionId": "Rowan Treefolk#184",
+          "name": "Rowan Treefolk",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "CREATURE"
+          ],
+          "subtypes": [
+            "Treefolk"
+          ],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{3}{G}",
+          "manaValue": 4,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "faa99300-3ff8-40b6-be25-de626b32f39b",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "63bd35df-13dc-4299-bd2d-a636385ad23a",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Library",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "LAND"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+      "zoneType": "Graveyard",
+      "hidden": false,
+      "size": 1,
+      "cards": [
+        {
+          "entityId": "8bb92205-1ffe-494e-8f55-9d2cdae5fd8b",
+          "cardDefinitionId": "Sylvan Tutor#188",
+          "name": "Sylvan Tutor",
+          "zone": "Graveyard",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "SORCERY"
+          ],
+          "subtypes": [],
+          "colors": [
+            "GREEN"
+          ],
+          "keywords": [],
+          "manaCost": "{G}",
+          "manaValue": 1,
+          "oracleText": "",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+      "zoneType": "Exile",
+      "hidden": false,
+      "size": 0,
+      "cards": []
+    },
+    {
+      "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+      "zoneType": "Battlefield",
+      "hidden": false,
+      "size": 3,
+      "cards": [
+        {
+          "entityId": "83d32000-7b5d-4a27-9d3d-d14fb7b53069",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Battlefield",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "controllerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "BASIC",
+            "LAND",
+            "Forest"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "8bb5b1ec-dfc6-46a1-954f-6a0090715394",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Battlefield",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "controllerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "BASIC",
+            "LAND",
+            "Forest"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        },
+        {
+          "entityId": "728f3e36-939f-422e-8450-81f6efa87261",
+          "cardDefinitionId": "Forest#BLB-378",
+          "name": "Forest",
+          "zone": "Battlefield",
+          "ownerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "controllerId": "352a4400-79c6-4486-b2fe-ac0bf6d81db2",
+          "types": [
+            "BASIC",
+            "LAND",
+            "Forest"
+          ],
+          "subtypes": [
+            "Forest"
+          ],
+          "colors": [],
+          "keywords": [],
+          "manaCost": "",
+          "manaValue": 0,
+          "oracleText": "({T}: Add {G}.)",
+          "tapped": false,
+          "summoningSick": false,
+          "faceDown": false,
+          "damageMarked": 0,
+          "counters": {},
+          "attachments": []
+        }
+      ]
+    }
+  ],
+  "stack": [],
+  "legalActions": [
+    {
+      "actionId": 0,
+      "kind": "PassPriority",
+      "description": "Pass priority",
+      "affordable": true,
+      "targetEntityIds": [],
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": false,
+      "isDecisionOption": false
+    },
+    {
+      "actionId": 1,
+      "kind": "CastSpell",
+      "description": "Cast Untamed Wilds",
+      "affordable": true,
+      "targetEntityIds": [],
+      "manaCost": "{2}{G}",
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": false,
+      "isDecisionOption": false
+    },
+    {
+      "actionId": 2,
+      "kind": "CastSpell",
+      "description": "Cast Untamed Wilds",
+      "affordable": true,
+      "targetEntityIds": [],
+      "manaCost": "{2}{G}",
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": false,
+      "isDecisionOption": false
+    },
+    {
+      "actionId": 3,
+      "kind": "CastSpell",
+      "description": "Cast Elvish Ranger",
+      "affordable": true,
+      "targetEntityIds": [],
+      "manaCost": "{2}{G}",
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": false,
+      "isDecisionOption": false
+    },
+    {
+      "actionId": 4,
+      "kind": "ActivateAbility",
+      "description": "{T}: Add {G}",
+      "affordable": true,
+      "targetEntityIds": [],
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": true,
+      "isDecisionOption": false
+    },
+    {
+      "actionId": 5,
+      "kind": "ActivateAbility",
+      "description": "{T}: Add {G}",
+      "affordable": true,
+      "targetEntityIds": [],
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": true,
+      "isDecisionOption": false
+    },
+    {
+      "actionId": 6,
+      "kind": "ActivateAbility",
+      "description": "{T}: Add {G}",
+      "affordable": true,
+      "targetEntityIds": [],
+      "hasXCost": false,
+      "minX": 0,
+      "minTargets": 1,
+      "maxTargets": 1,
+      "requiresDamageDistribution": false,
+      "isManaAbility": true,
+      "isDecisionOption": false
+    }
+  ],
+  "terminated": false,
+  "stateDigest": "88cc77a2d2e6057a09ca520be83b1b5eb10872a56d83d8f151a9b5b094592132"
+}
