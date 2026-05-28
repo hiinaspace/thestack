@@ -28,6 +28,7 @@ from llm import argentum
 
 from .policies import aggressive
 from .runner import run_scripted_game
+from .scripted_agent import DecisionScript
 
 
 def _check(label: str, cond: bool, detail: str = "") -> bool:
@@ -182,6 +183,62 @@ def test_combat_decisions_commit_through_to_damage() -> bool:
     return ok
 
 
+def test_blockers_response_with_omitted_map_is_accepted() -> bool:
+    """Regression for the 400 a live 26b run hit at step 189: the model
+    expressed "no blocks" by emitting ``{type, decisionId}`` with the
+    ``blockers`` field omitted entirely. kotlinx-serialization used to
+    reject the missing required field, 400-ing the whole game. The field
+    now defaults to empty, so an omitted-map response must be accepted and
+    the game must continue past the block step.
+
+    We script the defending player's CHOOSE_BLOCKERS response to a bare
+    dict with no ``blockers`` key (the scripted agent backfills decisionId,
+    reproducing the exact shape that failed) and assert the run reaches a
+    natural stop without an argentum_error.
+    """
+    print("\ntest_blockers_response_with_omitted_map_is_accepted:")
+    with tempfile.TemporaryDirectory() as td:
+        result = run_scripted_game(
+            persona_a="aria",
+            persona_b="bryn",
+            deck_a="red_rush",
+            deck_b="green_might",
+            library_seed=42,
+            script_a=[],
+            # Every CHOOSE_BLOCKERS for bryn → bare response, no blockers key.
+            script_b=[
+                DecisionScript(
+                    kind="CHOOSE_BLOCKERS",
+                    response={"type": "BlockersChosenResponse"},
+                    reasoning="[bare no-blocks]",
+                )
+                for _ in range(20)
+            ],
+            policy_a=aggressive,
+            policy_b=aggressive,
+            tmp_root=Path(td),
+            max_steps=120,
+            verbose=False,
+            game_id="combat-bare-blockers",
+        )
+
+    ok = True
+    ok &= _check(
+        "run did not abort with an argentum_error (omitted blockers map accepted)",
+        not (result.stop_reason or "").startswith("argentum_error"),
+        f"stop_reason={result.stop_reason}",
+    )
+    # And the bare response actually drove block steps — at least one
+    # BlockersDeclared fired despite the omitted map.
+    by_type = sum(1 for ev in result.engine_events() if ev.get("type") == "BlockersDeclared")
+    ok &= _check(
+        "BlockersDeclared still fired with the bare response shape",
+        by_type >= 1,
+        f"{by_type} BlockersDeclared events",
+    )
+    return ok
+
+
 def main() -> int:
     if not argentum.health():
         print(
@@ -193,6 +250,7 @@ def main() -> int:
         test_combat_step_emits_only_shell_action,
         test_choose_attackers_and_choose_blockers_decisions_fire,
         test_combat_decisions_commit_through_to_damage,
+        test_blockers_response_with_omitted_map_is_accepted,
     ]
     all_ok = True
     for t in tests:
