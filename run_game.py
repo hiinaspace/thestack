@@ -9,7 +9,7 @@ from pathlib import Path
 from cards.decks import DECK_NAMES, default_deck_for, get_deck
 from game.events import ACTION, AUTOPASS, ENGINE_EVENT, GAME_OVER, OBSERVATION, EventLog
 from llm import argentum, dev_telemetry
-from llm.autopass import autopass_action_id, should_track_no_progress
+from llm.autopass import autopass_action_id
 from llm.client import DEFAULT_MODEL, make_client
 from llm.commentator import CommentatorAgent
 from llm.meta import reflect_after_game, write_pre_game_strategy
@@ -33,7 +33,21 @@ def run_game(
     persona_a_model: str | None = None,
     persona_b_model: str | None = None,
     library_seed: int | None = None,
+    agents_override: dict[str, object] | None = None,
+    games_root: Path | None = None,
+    skip_mulligans: bool = False,
 ) -> None:
+    """Run a game.
+
+    ``agents_override``: when set (maps persona_name -> agent), skips all
+    LLM-auxiliary passes (pre-game strategy, commentator, reflection) and
+    uses the provided agents directly. Used by ``tests/scripted/runner.py``
+    to drive deterministic ScriptedAgents through the real harness loop —
+    the load-bearing primitive for [[feedback-live-harness-tests]].
+
+    ``games_root``: parent dir for game logs (default ``games/``). Tests
+    pass a tmp dir so the run is hermetic.
+    """
     persona_a = Persona(persona_a_name)
     persona_b = Persona(persona_b_name)
     deck_a = get_deck(deck_a_name)
@@ -43,7 +57,7 @@ def run_game(
         persona_b.name: deck_b_name,
     }
 
-    game_dir = Path("games") / game_id
+    game_dir = (games_root or Path("games")) / game_id
     game_dir.mkdir(parents=True, exist_ok=True)
     log_path = game_dir / "game.jsonl"
     event_log = EventLog(game_id, log_path)
@@ -68,12 +82,23 @@ def run_game(
         print("Start it with: JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 just gym-server")
         return
 
-    client = None if random_agents else make_client()
+    use_auxiliaries = not random_agents and agents_override is None
+    client = make_client() if use_auxiliaries else None
     commentator = None
     sdk_agents: list = []  # Track ClaudePlayerAgents for explicit close() at game end
 
-    if random_agents:
-        agents: dict[str, object] = {
+    if agents_override is not None:
+        agents: dict[str, object] = dict(agents_override)
+        # Late-bind the event log so override agents (e.g. ScriptedAgent)
+        # write ACTION rows into the same file run_game writes the rest
+        # of the timeline into. Construction-time injection would require
+        # constructing the EventLog above the agents, which would split
+        # ownership; this hook keeps run_game the sole EventLog owner.
+        for ag in agents.values():
+            if hasattr(ag, "bind_event_log"):
+                ag.bind_event_log(event_log)
+    elif random_agents:
+        agents = {
             persona_a.name: RandomAgent(persona_a.name, event_log, seed=1),
             persona_b.name: RandomAgent(persona_b.name, event_log, seed=2),
         }
@@ -151,7 +176,7 @@ def run_game(
         persona_b.name,
         deck_b,
         reveal_all=True,
-        skip_mulligans=False,
+        skip_mulligans=skip_mulligans,
         library_seed=library_seed,
     )
     event_log.append(OBSERVATION, {"obs": obs})
@@ -445,7 +470,6 @@ def run_game(
                     previous_digest
                     and obs.get("stateDigest") == previous_digest
                     and not obs.get("terminated")
-                    and should_track_no_progress(obs)
                 ):
                     no_progress_positions.add((str(previous_digest), acting_name))
             except Exception as e:
@@ -488,8 +512,9 @@ def run_game(
 
         # Post-game reflection: only run on a normal termination, so the
         # reflector doesn't write a confused memory entry about a half-game.
-        # Skipped for random-agent runs (no persona memory to update).
-        if stop_reason == "normal" and not random_agents:
+        # Skipped for random-agent runs and scripted-agent runs (no persona
+        # memory to update / nothing to reflect on with no LLM client).
+        if stop_reason == "normal" and use_auxiliaries:
             for persona, opponent, agent in (
                 (persona_a, persona_b.name, agents[persona_a.name]),
                 (persona_b, persona_a.name, agents[persona_b.name]),

@@ -204,19 +204,6 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         owner_name = player_ids.get(owner_id, owner_id)
         zones_by_owner.setdefault(owner_name, {})[z["zoneType"]] = z.get("cards", [])
 
-    def fmt_creature(c: dict) -> str:
-        name = c.get("name", "?")
-        tapped = " [tapped]" if c.get("tapped") else ""
-        sick = " (sick)" if c.get("summoningSick") else ""
-        p, t = c.get("power"), c.get("toughness")
-        kw = ", ".join(c.get("keywords", []))
-        kw_str = f" [{kw}]" if kw else ""
-        return f"    - {name} {p}/{t}{kw_str}{tapped}{sick}"
-
-    def fmt_noncreature(c: dict) -> str:
-        tapped = " [tapped]" if c.get("tapped") else ""
-        return f"    - {c.get('name', '?')}{tapped}"
-
     def add_battlefield(owner_label: str, cards: list[dict]) -> None:
         creatures = [c for c in cards if _has_card_type(c, "CREATURE")]
         lands = [c for c in cards if _has_card_type(c, "LAND")]
@@ -227,19 +214,19 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
         lines.append(f"\n{owner_label} BATTLEFIELD ({len(cards)} permanents):")
         lines.append(f"  Creatures ({len(creatures)}):")
         if creatures:
-            lines.extend(fmt_creature(c) for c in creatures)
+            lines.extend(f"    - {_fmt_card(c, 'battlefield')}" for c in creatures)
         else:
             lines.append("    - none (lands and other noncreatures cannot attack or block)")
 
         lines.append(f"  Lands / mana sources ({len(lands)}; cannot attack or block):")
         if lands:
-            lines.extend(fmt_noncreature(c) for c in lands)
+            lines.extend(f"    - {_fmt_card(c, 'battlefield_noncreature')}" for c in lands)
         else:
             lines.append("    - none")
 
         if other:
             lines.append(f"  Other noncreature permanents ({len(other)}; cannot attack or block):")
-            lines.extend(fmt_noncreature(c) for c in other)
+            lines.extend(f"    - {_fmt_card(c, 'battlefield_noncreature')}" for c in other)
 
     # Acting player's battlefield
     my_bf = zones_by_owner.get(acting_player_name, {}).get("Battlefield", [])
@@ -253,13 +240,7 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
     my_hand = zones_by_owner.get(acting_player_name, {}).get("Hand", [])
     lines.append(f"\nYOUR HAND ({len(my_hand)}):")
     for c in my_hand:
-        name = c.get("name", "?")
-        cost = c.get("manaCost", "")
-        oracle = c.get("oracleText", "").replace("\n", "; ")
-        types = "/".join(t.capitalize() for t in c.get("types", []))
-        p, t = _power_toughness(c)
-        pt = f" {p}/{t}" if p is not None and t is not None else ""
-        lines.append(f"  {name}{pt} {cost} — {types}{': ' + oracle if oracle else ''}")
+        lines.append(f"  {_fmt_card(c, 'hand')}")
     if not my_hand:
         lines.append("  (empty)")
 
@@ -267,24 +248,46 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
     opp_hand_size = opponent.get("handSize", 0)
     lines.append(f"\n{opponent_name}'s HAND: {opp_hand_size} cards (hidden)")
 
-    # Graveyards
+    # Graveyards — render full card lines so the LLM can see recursion fuel,
+    # threshold counters, etc. Land cards collapse to bare names since they
+    # carry no rules text worth re-printing.
+    def _render_graveyard(owner_label: str, cards: list[dict]) -> str:
+        if not cards:
+            return f"{owner_label} graveyard: empty"
+        lines_local = [f"{owner_label} graveyard ({len(cards)}):"]
+        for c in cards:
+            if _has_card_type(c, "LAND"):
+                lines_local.append(f"  - {c.get('name', '?')}")
+            else:
+                lines_local.append(f"  - {_fmt_card(c, 'graveyard')}")
+        return "\n".join(lines_local)
+
     my_gy = zones_by_owner.get(acting_player_name, {}).get("Graveyard", [])
     opp_gy = zones_by_owner.get(opponent_name, {}).get("Graveyard", [])
-    lines.append(f"\nYour graveyard: {[c['name'] for c in my_gy] or 'empty'}")
-    lines.append(f"{opponent_name}'s graveyard: {[c['name'] for c in opp_gy] or 'empty'}")
+    lines.append("")
+    lines.append(_render_graveyard("Your", my_gy))
+    lines.append(_render_graveyard(f"{opponent_name}'s", opp_gy))
 
     # Library sizes
     my_lib = acting.get("librarySize", 0)
     opp_lib = opponent.get("librarySize", 0)
     lines.append(f"\nLibrary: you {my_lib} | {opponent_name} {opp_lib}")
 
-    # Stack
+    # Stack — surface targets + short oracle so the LLM can read counter
+    # opportunities, removal targets, and pump-spell pressure without
+    # cross-referencing the battlefield by entityId.
     stack = obs.get("stack", [])
     if stack:
+        label_map = _build_entity_label_map(obs)
         lines.append("\nSTACK (top last):")
         for item in stack:
             ctrl = player_ids.get(item.get("controllerId"), "?")
-            lines.append(f"  {item['name']} (by {ctrl})")
+            head = f"  {_fmt_card(item, 'stack')} — by {ctrl}"
+            target_ids = item.get("targets") or []
+            if target_ids:
+                target_strs = [label_map.get(tid, _entity_id_prefix(tid)) for tid in target_ids]
+                head += f" [targets: {', '.join(target_strs)}]"
+            lines.append(head)
 
     # Pending decision
     pd = obs.get("pendingDecision")
@@ -295,7 +298,10 @@ def format_observation(obs: dict, acting_player_name: str) -> str:
 
 
 def format_recent_public_actions(
-    actions: list[dict], max_actions: int = 2, max_full_actions: int = 1
+    actions: list[dict],
+    max_actions: int = 2,
+    max_full_actions: int = 1,
+    obs: dict | None = None,
 ) -> str:
     """Compact dialogue-style history for player prompts.
 
@@ -310,18 +316,46 @@ def format_recent_public_actions(
 
     ``max_full_actions`` controls how many of the most recent actions get
     the full multi-line framing. The rest are rendered as one-line digests.
+
+    When ``obs`` is provided, the prelude calls out anything still on the
+    stack (a freshly-cast counterspell with targets bound, a pump still
+    waiting to resolve, etc.) so the LLM isn't forced to cross-reference
+    the board for the most decision-relevant context.
     """
+    prelude_lines: list[str] = []
+    if obs:
+        stack = obs.get("stack") or []
+        if stack:
+            label_map = _build_entity_label_map(obs)
+            player_ids = {p["id"]: p["name"] for p in obs.get("players", [])}
+            prelude_lines.append(
+                "  STILL ON THE STACK (will resolve top-down once both players pass):"
+            )
+            for item in stack:
+                ctrl = player_ids.get(item.get("controllerId"), "?")
+                line = f"    - {_fmt_card(item, 'stack')} (by {ctrl})"
+                target_ids = item.get("targets") or []
+                if target_ids:
+                    target_strs = [label_map.get(tid, _entity_id_prefix(tid)) for tid in target_ids]
+                    line += f" [targets: {', '.join(target_strs)}]"
+                prelude_lines.append(line)
+
     if not actions:
-        return "--- WHAT JUST HAPPENED ---\n  (the game is just beginning)"
+        body = "  (the game is just beginning)"
+        head = "--- WHAT JUST HAPPENED ---"
+        return "\n".join([head] + prelude_lines + [body]) if prelude_lines else f"{head}\n{body}"
 
     notable = [a for a in actions if _is_notable_public_action(a)]
     if not notable:
-        return "--- WHAT JUST HAPPENED ---\n  (no notable actions yet)"
+        body = "  (no notable actions yet)"
+        head = "--- WHAT JUST HAPPENED ---"
+        return "\n".join([head] + prelude_lines + [body]) if prelude_lines else f"{head}\n{body}"
 
     recent = notable[-max_actions:]
     full_cutoff = max(0, len(recent) - max_full_actions)
 
     lines = ["--- WHAT JUST HAPPENED (oldest to newest) ---"]
+    lines.extend(prelude_lines)
     for idx, action in enumerate(recent):
         result = _format_public_engine_result(
             action.get("engine_events") or [],
@@ -540,6 +574,34 @@ def format_structured_decision(obs: dict, acting_player_name: str) -> str:
 
     target_requirements = pd.get("targetRequirements") or []
     legal_targets = pd.get("legalTargets") or {}
+    options = pd.get("options") or []
+
+    # Entity-label anchor block — render BEFORE target lists so the LLM can
+    # cross-reference an entityId in a target slot back to "Bryn's Gorilla
+    # Warrior on the battlefield". Drops the long ID-only failure mode when
+    # multiple creatures share a name.
+    referenced_ids: list[str] = []
+    seen_ids: set[str] = set()
+
+    def _push(eid: str | None) -> None:
+        if not eid or eid in seen_ids:
+            return
+        seen_ids.add(eid)
+        referenced_ids.append(eid)
+
+    for refs in legal_targets.values():
+        for ref in refs or []:
+            _push(ref.get("entityId"))
+    for ref in options:
+        _push(ref.get("entityId"))
+    if referenced_ids:
+        label_map = _build_entity_label_map(obs)
+        lines.append("  Entity anchors (entityId → board location):")
+        for eid in referenced_ids[:60]:
+            label = label_map.get(eid)
+            if label:
+                lines.append(f"    {eid} = {label}")
+
     if target_requirements:
         lines.append("  Target requirements:")
         for req in target_requirements:
@@ -551,7 +613,6 @@ def format_structured_decision(obs: dict, acting_player_name: str) -> str:
             for ref in legal_targets.get(str(idx), legal_targets.get(idx, []))[:30]:
                 lines.append(f"      * {_fmt_decision_ref(ref)}")
 
-    options = pd.get("options") or []
     if options:
         label = "Options"
         if pd.get("ordered"):
@@ -905,6 +966,24 @@ def _decision_constraint_sentence(pd: dict) -> str:
         # These fold into legalActions; structured response is uncommon.
         return f"answer the {kind} prompt above."
 
+    if kind == "CHOOSE_ATTACKERS":
+        opt_count = len(pd.get("options") or [])
+        return (
+            f"build an AttackersChosenResponse with `attackers` as an object "
+            f"{{attackerEntityId: defenderEntityId}}. Pick attackers from the {opt_count} "
+            f"creature option(s) above; pick the defender from the legalTargets list "
+            f"(usually the opponent's player entityId). Empty `attackers={{}}` skips combat."
+        )
+
+    if kind == "CHOOSE_BLOCKERS":
+        opt_count = len(pd.get("options") or [])
+        return (
+            f"build a BlockersChosenResponse with `blockers` as an object "
+            f"{{blockerEntityId: [attackerEntityId, ...]}}. Pick from the {opt_count} blocker "
+            f"option(s); each blocker's attacker list must come from its own "
+            f"legalTargets[index] entry. Empty `blockers={{}}` declines all blocks."
+        )
+
     return "satisfy the decision constraints described above."
 
 
@@ -925,6 +1004,137 @@ def _compact_shape(shape: dict) -> str:
     if colors:
         parts.append(f"availableColors={list(colors)}")
     return ", ".join(parts) if parts else "no extra constraints"
+
+
+_ORACLE_SHORT_LIMIT = 100
+
+
+def _short_oracle(text: str | None) -> str:
+    """Trim oracle text for in-line rendering. Long full text stays available
+    in ``format_structured_decision`` where the LLM is choosing between cards.
+
+    The 100-char cap keeps battlefield / hand listings readable; rules text
+    longer than that gets a continuation marker (``…``). Newlines collapse to
+    "; " so each card stays on one line.
+    """
+    if not text:
+        return ""
+    flat = text.replace("\n", "; ").strip()
+    if len(flat) <= _ORACLE_SHORT_LIMIT:
+        return flat
+    return flat[: _ORACLE_SHORT_LIMIT - 1].rstrip() + "…"
+
+
+def _entity_id_prefix(entity_id: str | None, n: int = 8) -> str:
+    """First N chars of an entityId — long enough to disambiguate in any
+    realistic obs, short enough not to drown the LLM."""
+    if not entity_id:
+        return "?"
+    return entity_id[:n]
+
+
+def _fmt_card(card: dict, ctx: str) -> str:
+    """One-line card rendering keyed on where it appears.
+
+    Replaces three ad-hoc renderers (hand, battlefield, decision_ref) so a
+    single edit covers every surface the LLM reads. ``ctx`` is one of:
+
+    - ``"hand"``: ``Name P/T {cost} — Type — short_oracle``
+    - ``"battlefield"``: ``Name P/T [keywords] [tapped] (sick) — short_oracle``
+    - ``"battlefield_noncreature"``: ``Name [tapped] — short_oracle`` (lands, etc.)
+    - ``"stack"``: ``Name {cost} — short_oracle`` (caller adds targets line)
+    - ``"graveyard"``: ``Name {cost} — Type [short_oracle if non-vanilla]``
+    - ``"decision_ref"``: ``Name P/T [tags] [entityId-prefix]`` (terse —
+      target picker needs anchor, not full rules)
+    """
+    name = card.get("name", "?")
+    p, t = _power_toughness(card)
+    pt = f" {p}/{t}" if p is not None and t is not None else ""
+    cost = card.get("manaCost") or ""
+    cost_part = f" {cost}" if cost else ""
+    types = "/".join(str(x).title() for x in card.get("types", []))
+    tapped = " [tapped]" if card.get("tapped") else ""
+    sick = " (sick)" if card.get("summoningSick") else ""
+    oracle_full = card.get("oracleText") or ""
+    oracle = _short_oracle(oracle_full)
+    keywords = card.get("keywords") or []
+
+    if ctx == "hand":
+        body = f"{name}{pt}{cost_part}"
+        if types:
+            body += f" — {types}"
+        if oracle:
+            body += f": {oracle}"
+        return body
+
+    if ctx == "battlefield":
+        kw = ", ".join(keywords)
+        kw_part = f" [{kw}]" if kw else ""
+        body = f"{name}{pt}{kw_part}{tapped}{sick}"
+        # Only attach short oracle for non-vanilla creatures — vanilla
+        # P/T-only creatures don't gain readability from a "no rules" line.
+        if oracle:
+            body += f" — {oracle}"
+        return body
+
+    if ctx == "battlefield_noncreature":
+        body = f"{name}{tapped}"
+        if oracle:
+            body += f" — {oracle}"
+        return body
+
+    if ctx == "stack":
+        body = f"{name}{cost_part}"
+        if oracle:
+            body += f" — {oracle}"
+        return body
+
+    if ctx == "graveyard":
+        body = f"{name}{cost_part}"
+        if types:
+            body += f" — {types}"
+        # Only attach oracle for cards with meaningful rules text — basic
+        # lands and vanilla creatures don't need the suffix.
+        if oracle and not (types == "Land" or types == "Basic/Land"):
+            body += f": {oracle}"
+        return body
+
+    if ctx == "decision_ref":
+        details = []
+        if cost:
+            details.append(cost)
+        if types:
+            details.append(types)
+        if p is not None and t is not None:
+            details.append(f"{p}/{t}")
+        detail_text = f" ({', '.join(details)})" if details else ""
+        return f"{name}{detail_text}{tapped} [{_entity_id_prefix(card.get('entityId'))}]"
+
+    return name
+
+
+def _build_entity_label_map(obs: dict) -> dict[str, str]:
+    """Map every visible entityId → a short ``Name (zone, controller)`` label.
+
+    Used during structured-decision rendering to disambiguate creatures with
+    similar names ("Goblin Bully" on both sides of the board). The
+    structured-decision prompt embeds this map as anchor lines so the LLM can
+    match the entityIds it sees in target/option lists back to the board it
+    already knows.
+    """
+    out: dict[str, str] = {}
+    player_names = {p["id"]: p["name"] for p in obs.get("players", [])}
+    for p in obs.get("players", []):
+        out[p["id"]] = f"{p['name']} (player)"
+    for z in obs.get("zones", []) or []:
+        owner = player_names.get(z.get("ownerId"), z.get("ownerId", "?"))
+        zone_label = (z.get("zoneType") or "?").lower()
+        for c in z.get("cards", []) or []:
+            eid = c.get("entityId")
+            if not eid:
+                continue
+            out[eid] = f"{c.get('name', '?')} ({zone_label}, {owner})"
+    return out
 
 
 def _fmt_decision_ref(ref: dict) -> str:
@@ -1077,6 +1287,56 @@ def _decision_response_example(pd: dict) -> str:
             }
         )
 
+    if kind == "CHOOSE_ATTACKERS":
+        # Defender = first legal attack target (encoded as legalTargets[0] by
+        # the gym), attackers = every attacker entity surfaced under
+        # `options`. Mirrors the harness fallback default ("attack with all").
+        legal = pd.get("legalTargets") or {}
+        defenders = legal.get("0") or legal.get(0) or []
+        defender_id = (defenders[0] or {}).get("entityId") if defenders else "<defenderId>"
+        attackers: dict[str, str] = {}
+        for opt in pd.get("options") or []:
+            eid = opt.get("entityId")
+            if eid:
+                attackers[str(eid)] = str(defender_id)
+        if not attackers:
+            attackers = {"<attackerId-from-options-above>": str(defender_id)}
+        return _json.dumps(
+            {
+                "type": "AttackersChosenResponse",
+                "decisionId": decision_id,
+                "attackers": attackers,
+            }
+        )
+
+    if kind == "CHOOSE_BLOCKERS":
+        # Greedy 1:1 pairing: each blocker (option) blocks the first attacker
+        # in its `legalTargets[idx]` list. Mirrors the harness fallback so the
+        # example shape matches what the default policy would emit.
+        legal = pd.get("legalTargets") or {}
+        blockers: dict[str, list[str]] = {}
+        used_attackers: set[str] = set()
+        for idx, opt in enumerate(pd.get("options") or []):
+            blocker_id = opt.get("entityId")
+            if not blocker_id:
+                continue
+            attackers_for = legal.get(str(idx)) or legal.get(idx) or []
+            for atk in attackers_for:
+                atk_id = atk.get("entityId")
+                if atk_id and atk_id not in used_attackers:
+                    blockers[str(blocker_id)] = [str(atk_id)]
+                    used_attackers.add(atk_id)
+                    break
+        if not blockers:
+            blockers = {}  # legal — "no blocks"
+        return _json.dumps(
+            {
+                "type": "BlockersChosenResponse",
+                "decisionId": decision_id,
+                "blockers": blockers,
+            }
+        )
+
     return _json.dumps({"type": "<ResponseType>", "decisionId": decision_id})
 
 
@@ -1189,7 +1449,6 @@ def _format_public_engine_result(
         "TurnChanged",
         "Untapped",
         "CommitCrime",
-        "Resolved",
     }
     for event in events:
         event_type = event.get("type")
@@ -1208,6 +1467,17 @@ def _format_public_engine_result(
             _append_unique(buckets["game"], text)
         elif event_type in {"SpellCast", "ZoneChange", "Tapped", "CardsDrawn"}:
             _append_unique(buckets["board"], text)
+        elif event_type in {"SpellCountered", "AbilityCountered"}:
+            # Treat counters as board-state-changing news: the spell that
+            # was on the stack is gone, and the LLM needs to update its
+            # plan accordingly.
+            _append_unique(buckets["board"], text)
+        elif event_type == "Resolved":
+            # Surface resolutions in the result digest so the LLM knows a
+            # prior cast actually went through (not just that there was a
+            # cast event). Skip if the text is empty / placeholder.
+            if text:
+                _append_unique(buckets["board"], text)
         else:
             _append_unique(buckets["board"], text)
 
@@ -1239,6 +1509,19 @@ def _public_event_text(event: dict, player_names_by_id: dict[str, str]) -> str:
         return _format_zone_change(event)
     if event_type == "PlayerLost":
         return f"{_player_from_raw_text(event.get('text') or '', player_names_by_id) or who} lost"
+    if event_type == "SpellCountered":
+        card = _event_card_name(event)
+        return f"{card} was countered"
+    if event_type == "AbilityCountered":
+        return "an ability was countered"
+    if event_type == "Resolved":
+        # The engine's Resolved event names the spell/ability that just
+        # resolved; surface it so the LLM doesn't have to infer from
+        # downstream outcome events alone.
+        card = _event_card_name(event)
+        if card and card != "A source":
+            return f"{card} resolved"
+        return ""
     return event.get("text") or ""
 
 

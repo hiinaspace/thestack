@@ -1,0 +1,6 @@
+--- WHAT JUST HAPPENED (oldest to newest) ---
+  STILL ON THE STACK (will resolve top-down once both players pass):
+    - Counterspell {U}{U} — Counter target spell. (by bryn) [targets: Volcanic Hammer (battlefield, aria)]
+  bryn (table talk): "Not so fast."
+  bryn played: Cast Counterspell
+  bryn declared: "Don't let that bolt my Gorilla."

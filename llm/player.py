@@ -80,7 +80,7 @@ class PlayerAgent:
         user_msg = (
             f"{format_turn_plan(self.toolbox.turn_plan)}\n\n"
             f"{format_observation(obs, self.name)}\n\n"
-            f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
+            f"{format_recent_public_actions(recent_public_actions or [], obs=obs)}\n\n"
             f"{format_combat_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_mulligan_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_legal_actions(legal_actions, obs, self.name)}\n\n"
@@ -164,7 +164,7 @@ class PlayerAgent:
 
         user_msg = (
             f"{format_observation(obs, self.name)}\n\n"
-            f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
+            f"{format_recent_public_actions(recent_public_actions or [], obs=obs)}\n\n"
             f"{format_structured_decision(obs, self.name)}\n\n"
             "Stay in voice. A quick monologue() line is welcome if this "
             "decision matters; otherwise just construct the DecisionResponse "
@@ -300,5 +300,53 @@ def _default_decision_response(obs: dict) -> dict:
 
     if kind == "BUDGET_MODAL":
         return {"type": "BudgetModalResponse", "decisionId": decision_id, "selectedModeIndices": []}
+
+    if kind == "CHOOSE_ATTACKERS":
+        # Default policy: attack with all valid attackers into the first valid
+        # defender. Mirrors the legacy "Attack with all" gym-kludge fallback so
+        # tests/random-agent self-play still produce forward combat progress.
+        # Trainers that want to skip combat can scripted-override this.
+        legal_targets = pd.get("legalTargets") or {}
+        defenders = legal_targets.get("0") or legal_targets.get(0) or []
+        defender_id = defenders[0].get("entityId") if defenders else None
+        attackers = {}
+        if defender_id is not None:
+            for opt in pd.get("options") or []:
+                aid = opt.get("entityId")
+                if aid is not None:
+                    attackers[aid] = defender_id
+        return {
+            "type": "AttackersChosenResponse",
+            "decisionId": decision_id,
+            "attackers": attackers,
+        }
+
+    if kind == "CHOOSE_BLOCKERS":
+        # Default policy: greedy 1:1 — pair each blocker with its first legal
+        # attacker, one each. Mirrors the legacy "Block as many as possible"
+        # entry the gym kludge surfaced, so default-policy games still exchange
+        # blocker↔attacker damage instead of silently skipping all blocks.
+        # Scripted overrides can supply a different blocker map.
+        legal_targets = pd.get("legalTargets") or {}
+        options = pd.get("options") or []
+        blockers: dict[str, list[str]] = {}
+        used_attackers: set[str] = set()
+        for idx, opt in enumerate(options):
+            blocker_id = opt.get("entityId")
+            if blocker_id is None:
+                continue
+            attackers_for = legal_targets.get(str(idx)) or legal_targets.get(idx) or []
+            for atk in attackers_for:
+                atk_id = atk.get("entityId")
+                if atk_id is None or atk_id in used_attackers:
+                    continue
+                blockers[blocker_id] = [atk_id]
+                used_attackers.add(atk_id)
+                break
+        return {
+            "type": "BlockersChosenResponse",
+            "decisionId": decision_id,
+            "blockers": blockers,
+        }
 
     return {"type": "CancelDecisionResponse", "decisionId": decision_id}

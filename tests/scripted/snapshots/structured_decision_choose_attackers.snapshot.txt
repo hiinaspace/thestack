@@ -1,0 +1,14 @@
+STRUCTURED DECISION REQUIRED:
+  Kind: CHOOSE_ATTACKERS
+  Decision ID: choose-attackers-<id-0>
+  Prompt: Declare attackers
+  REQUIRED: build an AttackersChosenResponse with `attackers` as an object {attackerEntityId: defenderEntityId}. Pick attackers from the 1 creature option(s) above; pick the defender from the legalTargets list (usually the opponent's player entityId). Empty `attackers={}` skips combat.
+  Shape (machine-readable): maxSelections=1
+  Entity anchors (entityId → board location):
+    <id-1> = bryn (player)
+    <id-2> = Hulking Goblin (battlefield, aria)
+  Options:
+    - Hulking Goblin ({1}{R}, Creature/Goblin, 2/2) [<id-2>]
+  Response shape (illustrative — picks the first legal option; substitute the entityIds YOU actually choose based on the board):
+    {"type": "AttackersChosenResponse", "decisionId": "choose-attackers-<id-0>", "attackers": {"<id-2>": "<id-1>"}}
+Call submit_decision(response, reasoning). Do not call submit_action for this prompt. Copy entityIds verbatim from the lists above; do not invent or modify them.

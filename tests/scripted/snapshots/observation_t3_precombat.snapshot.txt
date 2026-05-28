@@ -1,0 +1,35 @@
+Turn 3 | PRECOMBAT_MAIN / PRECOMBAT_MAIN | Priority: bryn
+
+YOUR LIFE: 20 | bryn's LIFE: 20
+YOUR MANA: pool=(empty); no untapped lands
+bryn's mana pool: (empty)
+
+YOUR BATTLEFIELD (5 permanents):
+  Creatures (2):
+    - Hulking Goblin 2/2
+    - Craven Giant 4/1 (sick)
+  Lands / mana sources (3; cannot attack or block):
+    - Mountain [tapped] — ({T}: Add {R}.)
+    - Mountain [tapped] — ({T}: Add {R}.)
+    - Mountain [tapped] — ({T}: Add {R}.)
+
+bryn's BATTLEFIELD (2 permanents):
+  Creatures (0):
+    - none (lands and other noncreatures cannot attack or block)
+  Lands / mana sources (2; cannot attack or block):
+    - Forest [tapped] — ({T}: Add {G}.)
+    - Forest [tapped] — ({T}: Add {G}.)
+
+YOUR HAND (4):
+  Raging Minotaur 3/3 {2}{R}{R} — Creature
+  Hulking Goblin 2/2 {1}{R} — Creature
+  Craven Giant 4/1 {2}{R} — Creature
+  Raging Minotaur 3/3 {2}{R}{R} — Creature
+
+bryn's HAND: 6 cards (hidden)
+
+Your graveyard: empty
+bryn's graveyard (1):
+  - Monstrous Growth {1}{G} — Sorcery
+
+Library: you 51 | bryn 51

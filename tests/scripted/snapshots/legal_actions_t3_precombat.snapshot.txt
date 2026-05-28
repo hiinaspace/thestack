@@ -1,0 +1,3 @@
+LEGAL ACTIONS:
+  0: Pass priority
+  1: {T}: Add {G} (×2 untapped)

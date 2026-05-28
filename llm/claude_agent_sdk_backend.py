@@ -544,7 +544,7 @@ class ClaudePlayerAgent:
         user_msg = (
             f"{format_turn_plan(self.toolbox.turn_plan)}\n\n"
             f"{format_observation(obs, self.name)}\n\n"
-            f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
+            f"{format_recent_public_actions(recent_public_actions or [], obs=obs)}\n\n"
             f"{format_combat_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_mulligan_evaluator(obs, self.name, legal_actions)}\n\n"
             f"{format_legal_actions(legal_actions, obs, self.name)}\n\n"
@@ -650,7 +650,7 @@ class ClaudePlayerAgent:
 
         user_msg = (
             f"{format_observation(obs, self.name)}\n\n"
-            f"{format_recent_public_actions(recent_public_actions or [])}\n\n"
+            f"{format_recent_public_actions(recent_public_actions or [], obs=obs)}\n\n"
             f"{format_structured_decision(obs, self.name)}\n\n"
             "Stay in voice. A quick monologue() line is welcome if this "
             "decision matters; otherwise just construct the DecisionResponse "
