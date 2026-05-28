@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Stack — Theater</title>
+  <!-- style.css supplies the shared card / tooltip / deck-modal styling;
+       theater.css adds the visual-novel stage, narration and portraits. -->
+  <link rel="stylesheet" href="static/style.css" />
+  <link rel="stylesheet" href="static/theater.css" />
+</head>
+<body class="theater-body">
+  <header id="theater-bar">
+    <div id="theater-title">The Stack</div>
+    <select id="game-picker" aria-label="game"></select>
+    <span id="theater-state"></span>
+    <a id="debug-link" href="/" title="open the technical debug viewer">debug view ↗</a>
+  </header>
+
+  <div id="theater-stage">
+    <div id="turn-tracker"></div>
+    <div id="playmats">
+      <div class="playmat" id="mat-a"></div>
+      <div class="playmat" id="mat-b"></div>
+    </div>
+    <div id="stage-hint">click / space / → to advance · ← to go back · scroll to scrub</div>
+  </div>
+
+  <div id="narration" class="kind-narrator">
+    <div class="portrait portrait-left" id="portrait-left"></div>
+    <div id="narration-center">
+      <div id="speaker-plate"></div>
+      <div id="narration-stage"></div>
+      <div id="narration-text"></div>
+      <div id="advance-indicator">▼</div>
+    </div>
+    <div class="portrait portrait-right" id="portrait-right"></div>
+  </div>
+
+  <footer id="theater-controls">
+    <button id="beat-prev" title="previous line">◄</button>
+    <input id="beat-scrubber" type="range" min="0" max="0" value="0" step="1" />
+    <button id="beat-next" title="next line">►</button>
+    <span id="beat-label">0 / 0</span>
+    <button id="autoplay-toggle" title="auto-advance">▶ auto</button>
+  </footer>
+
+  <div id="deck-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="deck-modal-title">
+    <div class="modal-backdrop" data-close-modal="deck"></div>
+    <section class="deck-modal-card">
+      <header class="deck-modal-head">
+        <div>
+          <h2 id="deck-modal-title">library and deck</h2>
+          <div id="deck-modal-meta"></div>
+        </div>
+        <button id="deck-modal-close" type="button" aria-label="close deck modal">×</button>
+      </header>
+      <div id="deck-modal-body"></div>
+    </section>
+  </div>
+
+  <script src="static/board.js"></script>
+  <script src="static/gamedata.js"></script>
+  <script src="static/theater.js"></script>
+</body>
+</html>

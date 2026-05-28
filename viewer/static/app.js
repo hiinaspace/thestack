@@ -18,7 +18,11 @@ const state = {
 
 window.thestackOracle = state.oracle;
 window.thestackDecks = state.initialDecks;
-window.openDeckModal = openDeckModal;
+window.thestackCardNames = state.cardNames;
+
+// Card-name rich-text linkification + the deck modal live in gamedata.js
+// (shared with the theater viewer); alias the linkifier for local call sites.
+const appendRichText = (el, text) => window.appendRichText(el, text);
 
 // ---------------------------------------------------------------- DOM refs
 
@@ -33,14 +37,10 @@ const $tabBody = document.getElementById("tab-body");
 const $prev = document.getElementById("prev");
 const $next = document.getElementById("next");
 const $showAll = document.getElementById("show-all");
-const $deckModal = document.getElementById("deck-modal");
-const $deckModalTitle = document.getElementById("deck-modal-title");
-const $deckModalMeta = document.getElementById("deck-modal-meta");
-const $deckModalBody = document.getElementById("deck-modal-body");
-const $deckModalClose = document.getElementById("deck-modal-close");
 
 let activeThoughtTooltip = null;
 let thoughtHideTimer = null;
+let suppressTimelineAutoScroll = false;
 
 // ------------------------------------------------------------------ events
 
@@ -52,7 +52,11 @@ $showAll.addEventListener("change", () => {
   state.showAllSteps = $showAll.checked;
   // Map the current obs index onto the new list, then re-clamp.
   const curObsIdx = currentObsIndex();
-  rebuildScrubObservations();
+  state.scrubObservations = window.TheStackData.scrubObservations(
+    state.observations,
+    state.events,
+    state.showAllSteps
+  );
   $scrubber.max = Math.max(0, state.scrubObservations.length - 1);
   const newStep = state.scrubObservations.indexOf(curObsIdx);
   setStep(newStep >= 0 ? newStep : 0);
@@ -60,13 +64,9 @@ $showAll.addEventListener("change", () => {
     `${state.events.length} events · ${state.observations.length} board states` +
     ` · scrubbing ${state.scrubObservations.length}`;
 });
-$deckModalClose?.addEventListener("click", closeDeckModal);
-$deckModal?.addEventListener("click", (e) => {
-  if (e.target.dataset.closeModal === "deck") closeDeckModal();
-});
+window.TheStackData.initDeckModal();
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeDeckModal();
-  if ($deckModal && !$deckModal.classList.contains("hidden")) return;
+  if (window.TheStackData.deckModalOpen()) return;
   if (e.target.tagName === "SELECT" || e.target.tagName === "INPUT") return;
   if (e.key === "ArrowLeft") setStep(state.step - 1);
   else if (e.key === "ArrowRight") setStep(state.step + 1);
@@ -80,16 +80,27 @@ $tabBody.addEventListener("scroll", hideThoughtTooltip);
   // Fetch the oracle lookup once — used by board.js to enrich tooltips when
   // the obs's own oracleText is empty (most non-land cards).
   try {
-    const oracle = await fetchOracleData();
-    mergeCardNames(Object.keys(oracle));
+    const oracle = await window.TheStackData.loadOracle();
     Object.assign(state.oracle, oracle);
-    for (const [name, card] of Object.entries(oracle)) {
-      state.oracle[name.toLowerCase()] = card;
-    }
   } catch (_e) { /* viewer still works without it */ }
 
-  const list = await fetchGameList();
-  if (list.length === 0) {
+  const params = new URLSearchParams(window.location.search);
+  const wanted = params.get("game");
+  const stepParam = parseInt(params.get("step") || "0", 10);
+
+  // Don't block the first board render on the game-list scan: if a specific
+  // game is requested (the viewer always mirrors ?game into the URL), load and
+  // render it immediately, then populate the picker when the list arrives.
+  const listPromise = window.TheStackData.fetchGameList().catch(() => []);
+  if (wanted) {
+    try {
+      await loadGame(wanted);
+      if (Number.isFinite(stepParam)) setStep(stepParam);
+    } catch (_e) { /* fall back to the list below */ }
+  }
+
+  const list = await listPromise;
+  if (list.length === 0 && !state.gameId) {
     $summary.textContent = "no games found";
     return;
   }
@@ -101,42 +112,39 @@ $tabBody.addEventListener("scroll", hideThoughtTooltip);
     opt.textContent = `${players}  ·  T${g.turns}  ·  ${winner}  ·  ${g.game_id.slice(0, 8)}`;
     $picker.appendChild(opt);
   }
-  const params = new URLSearchParams(window.location.search);
-  const wanted = params.get("game");
-  const initial = wanted && list.some((g) => g.game_id === wanted) ? wanted : list[0].game_id;
-  $picker.value = initial;
-  await loadGame(initial);
-  const stepParam = parseInt(params.get("step") || "0", 10);
-  if (Number.isFinite(stepParam)) setStep(stepParam);
+  const initial = wanted && list.some((g) => g.game_id === wanted)
+    ? wanted
+    : (state.gameId || list[0]?.game_id);
+  if (initial) $picker.value = initial;
+  if (initial && !state.gameId) {
+    await loadGame(initial);
+    if (Number.isFinite(stepParam)) setStep(stepParam);
+  }
 })();
 
 // ---------------------------------------------------------------- game I/O
 
 async function loadGame(gameId) {
   state.gameId = gameId;
-  const [gd, pd] = await Promise.all([
-    fetchGameData(gameId),
-    fetchGamePersonas(gameId),
-  ]);
-  state.events = gd.events;
-  state.observations = [];
-  state.playersById = {};
-  state.playerOrder = [];
-  state.initialDecks = {};
-  for (let i = 0; i < state.events.length; i++) {
-    if (state.events[i].event === "observation") {
-      state.observations.push(i);
-      for (const p of state.events[i].obs?.players || []) {
-        state.playersById[p.id] = p.name;
-        if (!state.playerOrder.includes(p.name)) state.playerOrder.push(p.name);
-      }
-    }
-  }
-  state.initialDecks = collectInitialDecks(state.events);
+  const data = await window.TheStackData.loadGame(gameId);
+  state.events = data.events;
+  state.observations = data.observations;
+  state.playersById = data.playersById;
+  state.playerOrder = data.playerOrder;
+  state.initialDecks = data.initialDecks;
   window.thestackDecks = state.initialDecks;
-  mergeCardNames(collectCardNamesFromEvents(state.events));
-  rebuildScrubObservations();
-  state.personas = pd;
+  // Linkable names = every known card (oracle) plus anything seen in this game.
+  state.cardNames = window.TheStackData.sortCardNames([
+    ...Object.keys(state.oracle),
+    ...data.cardNames,
+  ]);
+  window.thestackCardNames = state.cardNames;
+  state.scrubObservations = window.TheStackData.scrubObservations(
+    state.observations,
+    state.events,
+    state.showAllSteps
+  );
+  state.personas = data.personas;
   state.step = 0;
 
   buildTabs();
@@ -146,119 +154,6 @@ async function loadGame(gameId) {
   $summary.textContent =
     `${state.events.length} events · ${state.observations.length} board states` +
     ` · scrubbing ${state.scrubObservations.length}`;
-}
-
-async function fetchOracleData() {
-  return fetchJsonCandidates(["data/oracle.json", "/api/oracle"]);
-}
-
-async function fetchGameList() {
-  return fetchJsonCandidates(["data/games.json", "/api/games"]);
-}
-
-async function fetchGameData(gameId) {
-  const safeGameId = encodeURIComponent(gameId);
-  try {
-    const text = await fetchTextCandidates([`data/games/${safeGameId}/game.jsonl`]);
-    return { game_id: gameId, events: parseJsonLines(text) };
-  } catch (_textError) {
-    try {
-      return await fetchJsonCandidates([`data/games/${safeGameId}/game.json`]);
-    } catch (_jsonError) {
-      return fetchJsonCandidates([`/api/games/${safeGameId}`]);
-    }
-  }
-}
-
-async function fetchGamePersonas(gameId) {
-  const safeGameId = encodeURIComponent(gameId);
-  try {
-    return await fetchJsonCandidates([
-      `data/games/${safeGameId}/personas.json`,
-      `/api/games/${safeGameId}/personas`,
-    ]);
-  } catch (_e) {
-    return {};
-  }
-}
-
-async function fetchJsonCandidates(urls) {
-  const errors = [];
-  for (const url of urls) {
-    try {
-      const r = await fetch(url);
-      if (!r.ok) {
-        errors.push(`${url}: ${r.status}`);
-        continue;
-      }
-      return await r.json();
-    } catch (e) {
-      errors.push(`${url}: ${e.message || e}`);
-    }
-  }
-  throw new Error(`unable to load JSON (${errors.join("; ")})`);
-}
-
-async function fetchTextCandidates(urls) {
-  const errors = [];
-  for (const url of urls) {
-    try {
-      const r = await fetch(url);
-      if (!r.ok) {
-        errors.push(`${url}: ${r.status}`);
-        continue;
-      }
-      return await r.text();
-    } catch (e) {
-      errors.push(`${url}: ${e.message || e}`);
-    }
-  }
-  throw new Error(`unable to load text (${errors.join("; ")})`);
-}
-
-function parseJsonLines(text) {
-  const events = [];
-  for (const line of String(text || "").split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (trimmed) events.push(JSON.parse(trimmed));
-  }
-  return events;
-}
-
-/**
- * Build the list of observation indices the scrubber stops on. Skip observations
- * whose preceding action was an autopass — those are the "and now both bots
- * passed through the upkeep" beats nobody wants to scrub through. Always
- * include the first and last observation.
- */
-function rebuildScrubObservations() {
-  if (state.showAllSteps) {
-    state.scrubObservations = [...state.observations];
-    return;
-  }
-  const keep = [];
-  for (let k = 0; k < state.observations.length; k++) {
-    const obsIdx = state.observations[k];
-    const isFirst = k === 0;
-    const isLast = k === state.observations.length - 1;
-    if (isFirst || isLast) {
-      keep.push(obsIdx);
-      continue;
-    }
-    // Look backwards from obsIdx for the action that produced it; keep iff
-    // that action wasn't autopass.
-    let producedByAutopass = false;
-    for (let j = obsIdx - 1; j >= 0; j--) {
-      const ev = state.events[j];
-      if (ev.event === "action") {
-        producedByAutopass = (ev.reasoning || "").startsWith("[autopass]");
-        break;
-      }
-      if (ev.event === "observation") break;
-    }
-    if (!producedByAutopass) keep.push(obsIdx);
-  }
-  state.scrubObservations = keep;
 }
 
 // ------------------------------------------------------------------- tabs
@@ -343,103 +238,6 @@ function setStep(n) {
   params.set("step", String(n));
   const url = `${window.location.pathname}?${params.toString()}`;
   window.history.replaceState(null, "", url);
-}
-
-// --------------------------------------------------------------- deck modal
-
-function openDeckModal(player, zones = {}) {
-  if (!$deckModal || !$deckModalBody) return;
-  const deck = state.initialDecks[player.name] || countCardsFromZones(zones);
-  const library = zones.Library || [];
-
-  $deckModalTitle.textContent = `${player.name} — library and deck`;
-  $deckModalMeta.textContent =
-    `${library.length} cards currently in library · ${deck.total} cards in original deck`;
-  $deckModalBody.replaceChildren();
-
-  const librarySection = document.createElement("section");
-  librarySection.className = "deck-modal-section";
-  const libraryTitle = document.createElement("h3");
-  libraryTitle.textContent = "Current library (top first)";
-  librarySection.appendChild(libraryTitle);
-  librarySection.appendChild(libraryListEl(library));
-
-  const deckSection = document.createElement("section");
-  deckSection.className = "deck-modal-section";
-  const deckTitle = document.createElement("h3");
-  deckTitle.textContent = "Full decklist";
-  deckSection.appendChild(deckTitle);
-  deckSection.appendChild(deckCountListEl(deck.cards));
-
-  $deckModalBody.appendChild(librarySection);
-  $deckModalBody.appendChild(deckSection);
-  $deckModal.classList.remove("hidden");
-}
-
-function closeDeckModal() {
-  if (!$deckModal || $deckModal.classList.contains("hidden")) return;
-  $deckModal.classList.add("hidden");
-  $deckModalBody?.replaceChildren();
-}
-
-function libraryListEl(cards) {
-  const list = document.createElement("ol");
-  list.className = "deck-card-list deck-library-list";
-  if (!cards.length) {
-    const empty = document.createElement("li");
-    empty.className = "empty";
-    empty.textContent = "(empty)";
-    list.appendChild(empty);
-    return list;
-  }
-  for (const card of cards) {
-    const item = document.createElement("li");
-    item.className = "deck-card-row";
-    appendCardToken(item, cardDisplayName(card));
-    list.appendChild(item);
-  }
-  return list;
-}
-
-function deckCountListEl(cards) {
-  const list = document.createElement("div");
-  list.className = "deck-card-list deck-count-list";
-  if (!cards.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "(no deck data)";
-    list.appendChild(empty);
-    return list;
-  }
-  for (const row of cards) {
-    const item = document.createElement("div");
-    item.className = "deck-card-row";
-    const count = document.createElement("span");
-    count.className = "deck-card-count";
-    count.textContent = `${row.count}x`;
-    item.appendChild(count);
-    appendCardToken(item, row.name);
-    const oracle = state.oracle[row.name] || state.oracle[row.name.toLowerCase()];
-    const type = oracle?.type_line || row.sample?.types?.join(" ");
-    if (type) {
-      const typeEl = document.createElement("span");
-      typeEl.className = "deck-card-type";
-      typeEl.textContent = type;
-      item.appendChild(typeEl);
-    }
-    list.appendChild(item);
-  }
-  return list;
-}
-
-function appendCardToken(parent, name) {
-  const token = document.createElement("span");
-  token.className = "card-text-token";
-  token.textContent = name || "?";
-  if (typeof window.attachCardHover === "function") {
-    window.attachCardHover(token, { name });
-  }
-  parent.appendChild(token);
 }
 
 // --------------------------------------------------------------- tab body
@@ -539,7 +337,25 @@ function renderTimeline() {
     $tabBody.appendChild(empty);
     return;
   }
-  for (const item of items) $tabBody.appendChild(timelineItemEl(item));
+  let lastTurn = null;
+  let lastPastEl = null;
+  for (const item of items) {
+    const turn = item.event?.turn;
+    if (turn != null && turn !== lastTurn) {
+      const sep = document.createElement("div");
+      sep.className = "timeline-turn-sep";
+      sep.textContent = `— Turn ${turn} —`;
+      $tabBody.appendChild(sep);
+      lastTurn = turn;
+    }
+    const el = timelineItemEl(item);
+    if (!item.future) lastPastEl = el;
+    $tabBody.appendChild(el);
+  }
+  if (lastPastEl) {
+    lastPastEl.classList.add("timeline-current");
+    if (!suppressTimelineAutoScroll) lastPastEl.scrollIntoView({ block: "nearest" });
+  }
 }
 
 function buildTimelineItems(events, cutoff) {
@@ -555,6 +371,10 @@ function buildTimelineItems(events, cutoff) {
     }
 
     if (e.event === "action") {
+      if (e.reaction_trigger) {
+        pendingThoughts[e.player] = [];
+        continue;
+      }
       const engineEvents = followingEngineEvents(events, i, e);
       const result = summarizeEngineEvents(engineEvents);
       const passNoise = isAutopassNoise(e);
@@ -641,11 +461,11 @@ function timelineItemEl(item) {
     colorTimelineItem(el, item.event.player);
     const h = document.createElement("div");
     h.className = "timeline-head";
-    const label = item.kind === "monologue" ? "monologue" : "table talk";
+    const label = item.kind === "monologue" ? "thinks" : "says";
     h.textContent = `T${item.event.turn} · ${item.event.player} · ${label}`;
     el.appendChild(h);
     const body = document.createElement("div");
-    body.className = `timeline-${item.kind}`;
+    body.className = item.kind === "monologue" ? "timeline-monologue-body" : "timeline-table-talk-body";
     appendRichText(body, item.event.text || "");
     el.appendChild(body);
     return el;
@@ -696,6 +516,16 @@ function timelineItemEl(item) {
   h.textContent = `T${e.turn} · ${e.player} · ${e.phase || ""}`;
   el.appendChild(h);
 
+  if (item.thinking) {
+    const thought = document.createElement("span");
+    thought.className = "thought-trigger";
+    thought.textContent = "thought";
+    thought.addEventListener("mouseenter", (event) => showThoughtTooltip(item.thinking, event));
+    thought.addEventListener("mousemove", positionThoughtTooltip);
+    thought.addEventListener("mouseleave", scheduleHideThoughtTooltip);
+    el.appendChild(thought);
+  }
+
   const action = document.createElement("div");
   action.className = "timeline-action-title";
   appendRichText(action, e.description || `action ${e.action_id}`);
@@ -715,21 +545,12 @@ function timelineItemEl(item) {
     el.appendChild(result);
   }
 
-  if (item.thinking) {
-    const thought = document.createElement("span");
-    thought.className = "thought-trigger";
-    thought.textContent = "thought";
-    thought.addEventListener("mouseenter", (event) => showThoughtTooltip(item.thinking, event));
-    thought.addEventListener("mousemove", positionThoughtTooltip);
-    thought.addEventListener("mouseleave", scheduleHideThoughtTooltip);
-    el.appendChild(thought);
-  }
-
   return el;
 }
 
 function summarizeEngineEvents(events) {
   const buckets = {
+    draws: [],
     deaths: [],
     life: [],
     combat: [],
@@ -754,7 +575,8 @@ function summarizeEngineEvents(events) {
     if (noise.has(type)) continue;
     const text = publicEngineText(ev);
     if (!text) continue;
-    if (type === "CreatureDestroyed") appendUnique(buckets.deaths, text);
+    if (type === "CardsDrawn") appendUnique(buckets.draws, text);
+    else if (type === "CreatureDestroyed") appendUnique(buckets.deaths, text);
     else if (type === "LifeChanged") appendUnique(buckets.life, text);
     else if (["AttackersDeclared", "BlockersDeclared", "DamageDealt"].includes(type)) {
       appendUnique(buckets.combat, text);
@@ -773,7 +595,10 @@ function publicEngineText(ev) {
   const names = eventPlayerNames(ev);
   const who = names.length ? names.join(", ") : "A player";
   const card = ev.cardNames?.[0] || "A source";
-  if (ev.type === "CardsDrawn") return `${who} drew ${ev.amount || "some"} card(s)`;
+  if (ev.type === "CardsDrawn") {
+    const drawn = (ev.cardNames || []).filter(Boolean);
+    return drawn.length ? `${who} drew ${drawn.join(", ")}` : `${who} drew ${ev.amount || "some"} card(s)`;
+  }
   if (ev.type === "LifeChanged" && ev.text) return `${who}: ${formatLifeChange(ev.text)}`;
   if (ev.type === "DamageDealt") {
     return `${card} dealt ${ev.amount || "?"} damage to ${eventDamageTarget(ev)}`;
@@ -852,104 +677,6 @@ function colorTimelineItem(el, player) {
   el.style.setProperty("--timeline-player-color", playerColor(player));
 }
 
-function mergeCardNames(names) {
-  const byLower = new Map();
-  for (const name of [...state.cardNames, ...(names || [])]) {
-    const clean = String(name || "").trim();
-    if (!clean) continue;
-    const key = clean.toLowerCase();
-    if (!byLower.has(key)) byLower.set(key, clean);
-  }
-  state.cardNames = [...byLower.values()].sort(
-    (a, b) => b.length - a.length || a.localeCompare(b)
-  );
-}
-
-function collectCardNamesFromEvents(events) {
-  const names = new Set();
-  for (const e of events || []) {
-    addCardNames(names, e.cardNames);
-    for (const ev of e.events || []) addCardNames(names, ev.cardNames);
-    collectCardNamesFromObservation(names, e.obs);
-  }
-  return [...names];
-}
-
-function collectInitialDecks(events) {
-  const firstObs = (events || []).find((e) => e.event === "observation")?.obs;
-  if (!firstObs) return {};
-  const byPlayer = {};
-  const playerNames = {};
-  for (const p of firstObs.players || []) playerNames[p.id] = p.name;
-  for (const zone of firstObs.zones || []) {
-    const player = playerNames[zone.ownerId];
-    if (!player || zone.hidden) continue;
-    if (!byPlayer[player]) byPlayer[player] = [];
-    byPlayer[player].push(...(zone.cards || []));
-  }
-
-  const decks = {};
-  for (const [player, cards] of Object.entries(byPlayer)) {
-    decks[player] = countCards(cards);
-  }
-  return decks;
-}
-
-function countCardsFromZones(zones) {
-  const cards = [];
-  for (const zoneCards of Object.values(zones || {})) {
-    cards.push(...(zoneCards || []));
-  }
-  return countCards(cards);
-}
-
-function countCards(cards) {
-  const rows = new Map();
-  for (const card of cards || []) {
-    const name = cardDisplayName(card);
-    if (!name) continue;
-    const row = rows.get(name) || { name, count: 0, sample: card };
-    row.count += 1;
-    rows.set(name, row);
-  }
-  const sorted = [...rows.values()].sort((a, b) => {
-    const aLand = isLandName(a.name) ? 1 : 0;
-    const bLand = isLandName(b.name) ? 1 : 0;
-    if (aLand !== bLand) return aLand - bLand;
-    return a.name.localeCompare(b.name);
-  });
-  const total = sorted.reduce((sum, row) => sum + row.count, 0);
-  return { total, cards: sorted };
-}
-
-function isLandName(name) {
-  const card = state.oracle[name] || state.oracle[name.toLowerCase()];
-  return /land/i.test(card?.type_line || "");
-}
-
-function collectCardNamesFromObservation(names, obs) {
-  if (!obs) return;
-  for (const z of obs.zones || []) {
-    for (const c of z.cards || []) addCardName(names, cardDisplayName(c));
-  }
-  for (const c of obs.stack || []) addCardName(names, cardDisplayName(c));
-}
-
-function addCardNames(names, cardNames) {
-  for (const name of cardNames || []) addCardName(names, name);
-}
-
-function addCardName(names, name) {
-  const clean = String(name || "").trim();
-  if (clean) names.add(clean);
-}
-
-function cardDisplayName(card) {
-  if (!card) return "";
-  if (card.name) return card.name;
-  return String(card.cardDefinitionId || "").split("#")[0];
-}
-
 function playerColor(player) {
   const names = state.playerOrder.length ? state.playerOrder : Object.values(state.playersById);
   const idx = names.indexOf(player);
@@ -966,8 +693,10 @@ function attachTimelineNavigation(el, item) {
   el.addEventListener("click", (event) => {
     if (event.target.closest?.(".thought-trigger, .card-text-token")) return;
     const scrollTop = $tabBody.scrollTop;
+    suppressTimelineAutoScroll = true;
     setStep(targetStep);
     requestAnimationFrame(() => {
+      suppressTimelineAutoScroll = false;
       if (state.activeTab === "timeline") $tabBody.scrollTop = scrollTop;
     });
   });
@@ -1005,49 +734,6 @@ function stepForEventIndex(eventIndex) {
   if (step >= 0) return step;
   step = state.scrubObservations.findIndex((i) => i > obsIdx);
   return step >= 0 ? step : state.scrubObservations.length - 1;
-}
-
-function appendRichText(el, text) {
-  const raw = String(text || "");
-  let i = 0;
-  while (i < raw.length) {
-    const name = matchingCardName(raw, i);
-    if (!name) {
-      const next = nextCardNameIndex(raw, i + 1);
-      el.appendChild(document.createTextNode(raw.slice(i, next)));
-      i = next;
-      continue;
-    }
-    const token = document.createElement("span");
-    token.className = "card-text-token";
-    token.textContent = name;
-    if (typeof window.attachCardHover === "function") window.attachCardHover(token, { name });
-    el.appendChild(token);
-    i += name.length;
-  }
-}
-
-function nextCardNameIndex(text, start) {
-  let next = text.length;
-  for (let i = start; i < text.length; i++) {
-    if (matchingCardName(text, i)) return i;
-  }
-  return next;
-}
-
-function matchingCardName(text, index) {
-  for (const name of state.cardNames) {
-    if (text.slice(index, index + name.length).toLowerCase() !== name.toLowerCase()) continue;
-    if (!isCardNameBoundary(text[index - 1]) || !isCardNameBoundary(text[index + name.length])) {
-      continue;
-    }
-    return name;
-  }
-  return "";
-}
-
-function isCardNameBoundary(ch) {
-  return !ch || !/[A-Za-z0-9]/.test(ch);
 }
 
 function showThoughtTooltip(text, event) {

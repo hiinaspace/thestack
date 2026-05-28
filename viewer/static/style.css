@@ -708,24 +708,73 @@ main {
   color: var(--reasoning);
 }
 
+/* Monologue card: internal thought — soft, dashed, ghost-like */
 .timeline-monologue {
+  border: 1px dashed rgba(251, 207, 232, 0.22);
+  border-left: 3px dashed var(--timeline-player-color, var(--monologue));
+  background: rgba(251, 207, 232, 0.03);
+}
+
+.timeline-monologue-body {
   color: var(--monologue);
   font-style: italic;
+  font-size: 12px;
   padding-left: 8px;
-  border-left: 2px solid var(--monologue);
+  border-left: 2px solid rgba(251, 207, 232, 0.28);
+  margin-top: 4px;
 }
 
+/* Table talk card: spoken aloud — prominent, quoted */
 .timeline-table_talk {
-  color: var(--table-talk);
-  font-weight: 500;
+  background: rgba(252, 211, 77, 0.04);
+  border-top-color: rgba(252, 211, 77, 0.18);
+  border-right-color: rgba(252, 211, 77, 0.18);
+  border-bottom-color: rgba(252, 211, 77, 0.18);
 }
 
-.timeline-table_talk::before { content: "\201C"; }
-.timeline-table_talk::after { content: "\201D"; }
+.timeline-table-talk-body {
+  color: var(--table-talk);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  margin-top: 4px;
+}
+
+.timeline-table-talk-body::before {
+  content: "\201C";
+  font-size: 1.35em;
+  line-height: 0;
+  vertical-align: -0.18em;
+  opacity: 0.6;
+  margin-right: 1px;
+}
+
+.timeline-table-talk-body::after {
+  content: "\201D";
+  font-size: 1.35em;
+  line-height: 0;
+  vertical-align: -0.18em;
+  opacity: 0.6;
+  margin-left: 1px;
+}
 
 .timeline-game-over {
   color: var(--info);
   font-weight: 600;
+}
+
+.timeline-turn-sep {
+  text-align: center;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 14px 0 8px;
+  opacity: 0.45;
+}
+
+.timeline-item.timeline-current {
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.3);
 }
 
 .timeline-action-title {
@@ -741,7 +790,8 @@ main {
 
 .thought-trigger {
   display: inline-block;
-  margin-top: 8px;
+  margin-top: 4px;
+  margin-bottom: 6px;
   padding: 2px 7px;
   border: 1px solid rgba(139, 143, 168, 0.45);
   border-radius: 999px;

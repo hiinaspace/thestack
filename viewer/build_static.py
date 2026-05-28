@@ -58,17 +58,22 @@ def clean_bundle_paths(out: Path) -> None:
         path = out / child
         if path.exists():
             shutil.rmtree(path)
-    index = out / "index.html"
-    if index.exists():
-        index.unlink()
+    for page in ["index.html", "theater.html"]:
+        path = out / page
+        if path.exists():
+            path.unlink()
 
 
 def copy_static_assets(out: Path) -> None:
     shutil.copy2(STATIC_DIR / "index.html", out / "index.html")
+    shutil.copy2(STATIC_DIR / "theater.html", out / "theater.html")
     static_out = out / "static"
     static_out.mkdir(parents=True, exist_ok=True)
-    for asset in ["app.js", "board.js", "style.css"]:
+    for asset in ["app.js", "board.js", "gamedata.js", "theater.js", "style.css", "theater.css"]:
         shutil.copy2(STATIC_DIR / asset, static_out / asset)
+    portraits = STATIC_DIR / "portraits"
+    if portraits.is_dir():
+        shutil.copytree(portraits, static_out / "portraits")
 
 
 def read_personas(personas_dir: Path) -> dict[str, dict[str, str]]:

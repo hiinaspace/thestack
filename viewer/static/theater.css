@@ -1,0 +1,572 @@
+/* The Stack — Theater: visual-novel presentation layer.
+ * Builds on style.css (cards, tooltips, deck modal). Adds the 3D stage,
+ * the bottom narration overlay, character portraits, and transport controls. */
+
+.theater-body {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ----------------------------------------------------------------- top bar */
+
+#theater-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(10, 11, 18, 0.92);
+  z-index: 10;
+}
+
+#theater-title {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+#theater-state {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#debug-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 5px;
+}
+
+#debug-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* ------------------------------------------------------------------ stage */
+
+#theater-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1600px;
+  perspective-origin: 50% 32%;
+  overflow: hidden;
+  cursor: pointer;
+  background: radial-gradient(ellipse at 50% 18%, #1a1c2b 0%, #0b0c12 72%);
+}
+
+#playmats {
+  display: flex;
+  gap: 30px;
+  padding: 12px 30px;
+  max-width: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(18deg);
+  transform-origin: center 62%;
+}
+
+.playmat {
+  width: 420px;
+  max-width: 44vw;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(30, 33, 48, 0.62), rgba(14, 15, 22, 0.62));
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.playmat.active {
+  border-color: rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.35), 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.mat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mat-name {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.mat-life {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.mat-life-heart {
+  font-size: 12px;
+}
+
+.mat-mana {
+  display: flex;
+  gap: 3px;
+}
+
+.mana-pip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0b0c12;
+  border: 1px solid rgba(0, 0, 0, 0.4);
+  box-shadow: inset 0 0 2px rgba(0, 0, 0, 0.45);
+}
+
+.mat-zones {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.mat-zone-chip {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: rgba(8, 9, 16, 0.5);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 3px 6px;
+}
+
+button.mat-zone-btn {
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.mat-zone-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.mat-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 120px;
+}
+
+.mat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mat-row-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.mat-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 18px;
+}
+
+.mat-row .empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.mat-row-hand {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.card-back .card-art {
+  filter: brightness(0.92);
+}
+
+/* battlefield change highlights (diff vs the previously shown board) */
+.mat-cards .card.just-entered {
+  animation: card-enter 1.4s ease-out;
+  box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.9), 0 0 14px rgba(94, 234, 212, 0.6);
+  border-color: rgba(94, 234, 212, 0.9);
+}
+
+.mat-cards .card.just-tapped {
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.7);
+}
+
+@keyframes card-enter {
+  0% { box-shadow: 0 0 0 2px rgba(94, 234, 212, 1), 0 0 22px rgba(94, 234, 212, 0.9); }
+  100% { box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.5), 0 0 8px rgba(94, 234, 212, 0.3); }
+}
+
+.card-damage {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  z-index: 2;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #d9544a;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.mat-life-delta {
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mat-life-delta.down { color: #e0625a; }
+.mat-life-delta.up { color: #54ad6a; }
+
+.mat-zone-chip.just-changed {
+  border-color: var(--accent);
+  color: var(--accent);
+  animation: chip-flash 1.2s ease-out;
+}
+
+@keyframes chip-flash {
+  0% { background: rgba(245, 158, 11, 0.4); }
+  100% { background: rgba(8, 9, 16, 0.5); }
+}
+
+#stage-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Argentum-style turn / phase progress, top-center of the stage */
+#turn-tracker {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(8, 9, 14, 0.72);
+  backdrop-filter: blur(3px);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.tracker-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.tracker-turn {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.tracker-active {
+  font-weight: 700;
+}
+
+.tracker-over {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.tracker-rail {
+  display: flex;
+  gap: 4px;
+}
+
+.tracker-phase {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(28, 31, 46, 0.5);
+}
+
+.tracker-phase.done {
+  color: var(--text);
+  opacity: 0.7;
+}
+
+.tracker-phase.current {
+  color: #0b0c12;
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 700;
+}
+
+.tracker-step {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* -------------------------------------------------------------- narration */
+
+#narration {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  min-height: 190px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(8, 9, 14, 0.35), rgba(8, 9, 14, 0.96));
+  z-index: 5;
+}
+
+.portrait {
+  flex: 0 0 auto;
+  width: 150px;
+  height: 172px;
+  align-self: flex-end;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: #11131d;
+  filter: brightness(0.45) saturate(0.7);
+  transition: filter 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.portrait.empty {
+  visibility: hidden;
+}
+
+.portrait.speaking {
+  filter: none;
+  border-color: var(--portrait-color, var(--accent));
+  transform: translateY(-4px);
+}
+
+.portrait-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: radial-gradient(circle at 50% 32%,
+    color-mix(in srgb, var(--portrait-color, #2a2d3f) 42%, #11131d), #0c0d15);
+}
+
+.portrait-initial {
+  font-size: 52px;
+  font-weight: 800;
+  color: var(--portrait-color, var(--text));
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.portrait-name {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.portrait-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#narration-center {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+
+#speaker-plate {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.speaker-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.speaker-context {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#narration-text {
+  flex: 1;
+  max-height: 124px;
+  overflow-y: auto;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+#advance-indicator {
+  align-self: flex-end;
+  margin-top: 4px;
+  padding: 2px 12px;
+  color: var(--accent);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 6px;
+  animation: advance-bob 1s ease-in-out infinite;
+}
+
+#advance-indicator:hover {
+  background: rgba(245, 158, 11, 0.14);
+}
+
+@keyframes advance-bob {
+  0%, 100% { transform: translateY(0); opacity: 0.5; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
+
+/* stage directions: what happened / what the player did */
+#narration-stage {
+  margin-bottom: 6px;
+}
+
+.stage-line {
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.01em;
+}
+
+.stage-line + .stage-line {
+  margin-top: 2px;
+}
+
+/* dialogue segments (typed) */
+.dialogue-line {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.dialogue-line + .dialogue-line {
+  margin-top: 6px;
+}
+
+.line-speech {
+  color: var(--text);
+}
+
+.line-thought {
+  font-style: italic;
+  color: #c3c8de;
+}
+
+.line-narrator {
+  font-style: italic;
+  color: #bfe9c8;
+}
+
+.line-result {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* narrator / result beats have no character portraits */
+#narration.kind-narrator .portrait,
+#narration.kind-result .portrait {
+  visibility: hidden;
+}
+
+/* --------------------------------------------------------------- controls */
+
+#theater-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(10, 11, 18, 0.95);
+  z-index: 6;
+}
+
+#theater-controls button {
+  font: inherit;
+  color: var(--text);
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+#theater-controls button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+#beat-scrubber {
+  flex: 1;
+}
+
+#beat-label {
+  min-width: 72px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+#autoplay-toggle.on {
+  color: var(--accent);
+  border-color: var(--accent);
+}

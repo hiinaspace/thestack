@@ -30,6 +30,16 @@ def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/theater")
+def theater() -> FileResponse:
+    return FileResponse(STATIC_DIR / "theater.html")
+
+
+# Summarizing a game means scanning its whole transcript; cache the result
+# keyed by (mtime) so listing stays fast even with many games in the dir.
+_SUMMARY_CACHE: dict[str, tuple[float, dict]] = {}
+
+
 @app.get("/api/games")
 def list_games() -> JSONResponse:
     if not GAMES_DIR.is_dir():
@@ -41,7 +51,13 @@ def list_games() -> JSONResponse:
         log = child / "game.jsonl"
         if not log.exists():
             continue
-        meta = _summarize_game(child.name, log)
+        mtime = log.stat().st_mtime
+        cached = _SUMMARY_CACHE.get(child.name)
+        if cached and cached[0] == mtime:
+            meta = cached[1]
+        else:
+            meta = _summarize_game(child.name, log)
+            _SUMMARY_CACHE[child.name] = (mtime, meta)
         entries.append(meta)
     return JSONResponse(entries)
 
